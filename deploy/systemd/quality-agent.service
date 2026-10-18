@@ -1,5 +1,5 @@
 # 智能质检 Agent 平台 —— systemd 单元（非容器化部署）
-# 由 deploy/install_server.sh 替换占位符 __APP_USER__ / __APP_DIR__ / __APP_PORT__ 后
+# 由 deploy/install_server.sh 替换占位符 __APP_USER__ / __APP_DIR__ / __BACKEND_PORT__ 后
 # 安装到 /etc/systemd/system/quality-agent.service；手工安装时请先自行替换。
 [Unit]
 Description=Quality Inspection Agent Platform (FastAPI + LangGraph)
@@ -24,9 +24,12 @@ Environment=PYTHONUNBUFFERED=1
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 NoNewPrivileges=true
+# 前后端分离：本单元只拉起后端 API，绑定回环 127.0.0.1:__BACKEND_PORT__（如 18010）；
+# 对外的 Web 入口端口（如园区网 18000）由 Nginx 承担（托管前端 dist + 反代 /api/v1），
+# 故后端不再需要绑定低/对外端口，下面 CAP_NET_BIND_SERVICE 与低端口提权逻辑对后端已冗余。
 # 单 worker：LangGraph 检查点可能落 SQLite（CHECKPOINTER_PATH），多进程不安全；
 # 确需多 worker 时先切 CHECKPOINTER_URL=PostgreSQL 并压测验证。
-ExecStart=__APP_DIR__/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port __APP_PORT__
+ExecStart=__APP_DIR__/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port __BACKEND_PORT__
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal

@@ -23,7 +23,8 @@
 #
 # 可覆盖变量：OUT PY_VERSION OPENSSL_VERSION TARGET_PLATFORMS UVCMD NODE_BUILD MYSQL_VERSION MYSQL_TARBALL_URL MC_URL MINIO_SERVER_URL WEB_SRC
 #   WEB_SRC：要交付的 Vue3 前端工程根（默认 ../frontend，即工作区顶层深蓝版）；
-#     其 dist 会被植入 quality-agent/frontend/dist（后端 main.py 实际同源托管路径）。
+#     其 dist 会被植入 quality-agent/frontend/dist 仅作为制品携带（前后端分离：
+#     后端不再静态托管，install_server.sh 会把该 dist 投放到 Nginx web 根）。
 #     若交付的是 quality-agent 自带前端，则 WEB_SRC=$ROOT/frontend。
 #   TARGET_PLATFORMS：pip download 的 --platform 列表（默认 manylinux2014_x86_64
 #   + manylinux_2_17 + linux_x86_64 + none-any；glibc 2.28 目标机改传 2_28 系）
@@ -68,10 +69,11 @@ mkdir -p "$OUT"
 cd "$OUT"
 
 # ---------------------------------------------------------------------------
-log "1/6 前端产物（交付的是顶层 Vue3 深蓝版 $WEB_SRC；dist 不入 git，必须构建后植入后端托管路径）"
-# 后端 app/main.py 硬编码只托管 quality-agent/frontend/dist（同源 /api/v1、history 模式 catch-all），
-# 因此把要交付的 Vue3 前端 build 产物植入该目录，source.tar.gz 携带的就是真实上线 UI。
-# 顶层前端默认 VITE_QA_API_BASE=/api/v1（同源相对）+ VITE_QA_ENABLED=true，生产无 vite 代理也能直连平台。
+log "1/6 前端产物（交付的是顶层 Vue3 深蓝版 $WEB_SRC；dist 不入 git，构建后暂存供 nginx 投放）"
+# 前后端分离：后端 app/main.py 不再托管静态。本步把要交付的 Vue3 前端 build 产物暂存到
+# quality-agent/frontend/dist，仅为了随 source.tar.gz 携带；装机时由 install_server.sh 的
+# 5b 步投放到 nginx web 根（WEB_ROOT），nginx 监听对外端口并反代 /api/v1 到后端。
+# 顶层前端默认 VITE_QA_API_BASE=/api/v1（同源相对）+ VITE_QA_ENABLED=true，经 nginx 反代可直连平台。
 SERVED_DIST="$ROOT/frontend/dist"
 if [[ "$WEB_SRC" != "$ROOT/frontend" ]]; then
   [[ -f "$WEB_SRC/package.json" && -f "$WEB_SRC/index.html" ]] || die "WEB_SRC 不是有效前端工程：$WEB_SRC（无 Vue3 版可设 WEB_SRC=$ROOT/frontend）"

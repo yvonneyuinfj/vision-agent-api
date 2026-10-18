@@ -1,0 +1,58 @@
+# ============================================================================
+# 园区网离线部署 —— Nginx 站点模板（由 install_server.sh 渲染）
+# 占位符：__NGINX_PORT__ 对外端口 / __BACKEND_PORT__ 后端回环端口 / __WEB_ROOT__ 前端 dist 根
+# 渲染规则见 install_server.sh 第 5b 步；与 deploy/nginx/quality-agent.conf 结构一致，
+# 仅把端口/根目录参数化。分离模型：Nginx 托管前端 + 反代 /api/v1，后端只听回环。
+# ============================================================================
+
+upstream qcagent_backend {
+    server 127.0.0.1:__BACKEND_PORT__;
+    keepalive 32;
+}
+
+server {
+    listen      __NGINX_PORT__;
+    server_name _;
+
+    root  __WEB_ROOT__;
+    index index.html;
+
+    # 上传体积对齐后端 MAX_UPLOAD_BYTES（20971520 = 20M）
+    client_max_body_size 20m;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+    gzip_min_length 1k;
+
+    # SPA history 路由：真实文件直出，其余回落 index.html
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /assets/ {
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # API 反向代理（保留原始 /api/... 路径）
+    location /api/ {
+        proxy_pass         http://qcagent_backend;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection        "";
+
+        # Agent 思维链 SSE 流式：必须关缓冲
+        proxy_buffering    off;
+        proxy_cache        off;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+
+    location /docs         { proxy_pass http://qcagent_backend; }
+    location /redoc        { proxy_pass http://qcagent_backend; }
+    location /openapi.json { proxy_pass http://qcagent_backend; }
+}

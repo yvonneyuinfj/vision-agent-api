@@ -6,19 +6,20 @@
 > 决策 50 R1：唯一运行库＝MySQL），对象存储用**所内 Ceph（S3 协议，minio SDK 直连）**；
 > **目标机禁止安装 Docker**（已确认）——全形态免容器：MySQL 官方 minimal tarball 裸装、
 > 金相裸装、备份 mc 静态二进制。
-> 基线形态沿用公网验证环境 B′（[`README.md`](README.md)），**平台监听端口改为 18000**（本智能体
-> 可用端口段 18000–18099，园区网无 80/低端口权限）：平台裸机 venv + systemd 绑 18000（高位端口
-> 免低端口提权），六工具裸机 18011–18016（同机回环，不占园区网放行段；见 §四）；金相在 4.0 裸装（唯一路线，容器旁路已废）；
-> 本文只写**差异与离线特化动作**，通用机制（systemd 版本差异、能力热更、端点切换）不再重复，直接查 README 对应章节。
+> 基线形态沿用公网验证环境 B′（[`README.md`](README.md)），**改为前后端分离（Nginx 代理前端）**：
+> **Nginx 占对外端口 18000**（本智能体可用段 18000–18099，园区网唯一放行口）托管前端 dist 并反代 /api/v1 到
+> **后端 uvicorn（systemd，只听回环 127.0.0.1:18010）**；后端不再托管静态（app/main.py 已删除同源托管）。
+> 六工具裸机 18011–18016（同机回环，不占园区网放行段；见 §四）；金相在 4.0 裸装（唯一路线，容器旁路已废）；
+> 目标机需**预装 nginx**（若无则 ENABLE_NGINX=0 仅装后端 API）。本文只写**差异与离线特化动作**，通用机制查 README。
 
 ## 0. 与验证环境（B′）的差异总览
 
 | 项 | 公网验证环境 | 园区网部署 | 影响 |
 |---|---|---|---|
 | 平台 / 六工具形态 | 裸机 + systemd | 不变 | 无 |
-| 平台监听端口 | 绑 80（低端口，非 root 需 setcap/AmbientCapabilities 提权） | **绑 18000**（本智能体可用段 18000–18099；高位端口免提权） | install_server.sh 走免提权快路径；防火墙放行段见 §四 |
-| 前端 | 开发时 Vite dev server 代理 | **工作区顶层 Vue3 深蓝版**（独立仓 vision-agent-ui），`make_offline_bundle.sh` 构建后植入后端托管的 `frontend/dist`，**平台 18000 端口同源直出** | 同源相对 `/api/v1` + history 模式，无需单独 Nginx；须配 `AUTH_*` 登录鉴权 |
-| 目标机 OS | NFS 3.1（glibc 2.17 / systemd 219） | **NFC 4.0（glibc 2.28，预期 systemd ≥ 229）** | 金相可裸装；平台改绑高位端口 18000（免低端口提权）；OpenSSL ≥1.1.1 则免自建 |
+| 对外入口端口 | 绑 80（低端口，非 root 需 setcap/AmbientCapabilities 提权） | **Nginx 绑 18000**（本智能体可用段 18000–18099；高位端口）；**后端只听回环 127.0.0.1:18010** | install_server.sh：Nginx 占对外口、后端回环免低端口提权；防火墙只放行 18000（见 §四） |
+| 前端 | 开发时 Vite dev server 代理 | **工作区顶层 Vue3 深蓝版**（独立仓 vision-agent-ui），`make_offline_bundle.sh` 构建后随包携带，装机时由 **Nginx 托管**（install_server.sh 投放到 WEB_ROOT），对外 18000 | **前后端分离**：Nginx 反代 `/api/v1` 到后端回环；同源相对 `/api/v1` + history 回落在 Nginx 层；须配 `AUTH_*` |
+| 目标机 OS | NFS 3.1（glibc 2.17 / systemd 219） | **NFC 4.0（glibc 2.28，预期 systemd ≥ 229）** | 金相可裸装；后端绑回环 18010、Nginx 绑 18000（均≥1024 免提权）；目标机预装 nginx；OpenSSL ≥1.1.1 则免自建 |
 | Docker | 验证机有（RAGFlow 套件 / MySQL 容器 / 备份 mc 容器） | **禁止安装** | MySQL 改官方 tarball 裸装；金相容器旁路作废；备份 mc 改静态二进制 |
 | RAGFlow | 同机 Docker localhost | **所内既有实例，跨机 API 接入** | `.env` 改 IP + 所内新生成 API Key |
 | MySQL | 复用 RAGFlow 套件容器 | **部署机本机裸装**（官方 minimal tarball；禁 Docker；达梦不适配已定策） | 建库/账号/备份均宿主执行，无容器依赖 |
@@ -33,7 +34,7 @@
 
 ```bash
 # 1) 开发机（Windows Git Bash / WSL，有网）：构建顶层 Vue3 前端 + 源码包 + 锁定清单 + wheels + Python/OpenSSL tarball
-#    默认 WEB_SRC=工作区顶层 frontend/（Vue3 深蓝版），其 dist 会被植入 quality-agent/frontend/dist（后端实际同源托管路径）；
+#    默认 WEB_SRC=工作区顶层 frontend/（Vue3 深蓝版），其 dist 会被暂存到 quality-agent/frontend/dist 仅供随包携带（前后端分离：后端不再托管，装机时由 install_server.sh 投放到 Nginx web 根）；
 #    若交付 quality-agent 自带前端则传 WEB_SRC=quality-agent/frontend。
 cd quality-agent && bash scripts/dev/make_offline_bundle.sh
 
@@ -46,7 +47,7 @@ bash scripts/dev/make_offline_bundle.sh --on-verifier --with-mysql
 
 | 制品 | 必要性 | 说明 |
 |---|---|---|
-| `source.tar.gz` | **必需** | 含 `frontend/dist`（已植入顶层 Vue3 深蓝版产物）、uv.lock、deploy/、scripts/；**不含 .env** |
+| `source.tar.gz` | **必需** | 含 `frontend/dist`（顶层 Vue3 深蓝版产物，供 Nginx 投放）、uv.lock、deploy/、scripts/；**不含 .env** |
 | `qcagent-venv.tar.gz` | **必需（主路径）** | 验证机全量测试通过的整 venv；目标机须同为 `/usr/local/bin/python3.11` + glibc 同代，且 **APP_DIR 同为 /opt/agent/vision-agent/quality-agent**（venv 脚本 shebang/pyvenv.cfg 路径硬编码） |
 | `wheels/` + `requirements-offline.txt` | 备灾 | venv 迁移失败时 `pip --no-index` 重装用 |
 | `Python-3.11.14.tar.xz` / `openssl-1.1.1w.tar.gz` | 视目标机 | 无 3.11 时 `install_python311.sh PY_TARBALL=… OPENSSL_TARBALL=…` 离线编译 |
@@ -100,7 +101,9 @@ PLATFORM_PORT=18000 bash deploy/env-prep/init_ai_tools_env.sh   # 工具账户/�
 ```bash
 mkdir -p /root/QualityCheckingAgent
 tar -xzf <bundle>/source.tar.gz -C /root/QualityCheckingAgent
-# 离线主路径（venv 迁移）——APP_DIR 缺省已是 /opt/agent/vision-agent/quality-agent，与验证机一致；APP_PORT=18000 对齐端口段：
+# 离线主路径（venv 迁移）——APP_DIR 缺省已是 /opt/agent/vision-agent/quality-agent，与验证机一致；
+# 前后端分离：APP_PORT=18000 为 Nginx 对外入口；BACKEND_PORT 缺省 18010（后端回环，须与 .env API_PORT 一致）；
+# 目标机需预装 nginx（否则加 ENABLE_NGINX=0 仅装后端 API，自行前置 nginx 或跳前端）：
 APP_PORT=18000 OFFLINE_VENV_TGZ=<bundle>/qcagent-venv.tar.gz bash deploy/install_server.sh /root/QualityCheckingAgent
 # 备灾路径（venv 自检失败时）：
 # APP_PORT=18000 OFFLINE_WHEELS_DIR=<bundle>/wheels OFFLINE_REQUIREMENTS=<bundle>/requirements-offline.txt \
@@ -123,8 +126,9 @@ APP_PORT=18000 OFFLINE_VENV_TGZ=<bundle>/qcagent-venv.tar.gz bash deploy/install
    拿不到凭据就整段留空（降级本地落盘），不要填半截。
 4. **登录鉴权 `AUTH_*` 必须覆盖默认口令**：顶层 Vue3 前端带 `/login` 页，后端 `config.py` 的
    `auth_password`/`auth_secret` 是内置随机默认值，园区网生产务必改为自己的强口令（否则前端无法
-   登录、且默认密钥泄露可伪造会话）；`AUTH_ENABLED=true`（缺省）。前端靠同源 Cookie 会话，
-   只要平台 18000 端口同源直出 dist、`.env` 配好 AUTH_* 与 `API_PORT=18000` 即可，无需额外前端服务。
+   登录、且默认密钥泄露可伪造会话）；`AUTH_ENABLED=true`（缺省）。前端靠同源 Cookie 会话（经 Nginx）。
+   前后端分离下：`.env` 配好 AUTH_* 与 `API_HOST=127.0.0.1`/`API_PORT=18010`（后端只回环），install_server.sh 会把前端
+   dist 投放到 Nginx `WEB_ROOT` 并装好反代 `/api/v1`→18010 的站点（对外 18000）；浏览器访问 Nginx 的 18000 即可。
 
 ### Step 5 本机 MySQL 裸装与建库（目标机禁 Docker；达梦不适配，平台库落本机）
 
@@ -172,13 +176,18 @@ vim /opt/agent/vision-agent/quality-agent/deploy/sql/create_platform_user.sql   
 
 若所内硬性要求入库达梦：见 §五 风险表末行，属架构级改造，不在本次部署范围。
 
-### Step 6 起平台 + 健康检查
+### Step 6 起平台 + Nginx + 健康检查
 
 ```bash
-systemctl start quality-agent
+systemctl start quality-agent      # 后端只听回环 127.0.0.1:18010（systemd ExecStart 已固定 --host 127.0.0.1）
 journalctl -u quality-agent -f
-curl -s http://127.0.0.1:18000/api/v1/health
+# 后端回环直连（健底探针，不过 Nginx）：
+curl -s http://127.0.0.1:18010/api/v1/health
+# 经 Nginx 对外入口（install_server.sh 已投放 dist + 装站点并 reload）：
+curl -s -o /dev/null -w '前端首页 HTTP %{http_code}\n' http://127.0.0.1:18000/
+curl -s http://127.0.0.1:18000/api/v1/health     # 反代的 API
 # 期望 code=0, database=ok；vlm_available 按网关实况（false=agent 轨置灰，如实记录）
+# 若 ENABLE_NGINX=0 未装 Nginx，则只有 18010 回环 API，无 18000 前端入口。
 ```
 
 ### Step 7 能力种子 + 端点切换
@@ -234,7 +243,7 @@ MySQL 裸装后无 docker-proxy 环节：平台经 TCP 连 127.0.0.1，`qc_agent
 
 ## 四、网络与防火墙（园区网侧）
 
-- **本智能体可用端口段仅 18000–18099**：对园区网用户仅放行平台机 **18000**（前端 + /api/v1 同源入口）；22 限源（运维跳板机）；
+- **本智能体可用端口段仅 18000–18099**：对园区网用户仅放行 **Nginx 对外入口 18000**（托管前端 + 反代 /api/v1）；后端 18010 仅绑 127.0.0.1 回环不对外；22 限源（运维跳板机）；
 - 平台机出方向放行：→ 所内 RAGFlow 9380、Ceph RGW 端点、模型网关端口（MySQL 已本机化，无跨机数据库流量）；
 - 六工具 18011–18016 **已在可用段内**（18000–18099）：同机部署仅绑 127.0.0.1（回环不跨网络、不占放行段，通常免申请）；**若工具机与平台机分离**需跨机访问，18011–18016 仍在许可段内，无需额外申请；
 - 平台机**不应有默认路由出园区网**——部署后跑一次 Step 9 的外网残留检查确认。
@@ -296,7 +305,7 @@ MySQL 裸装后无 docker-proxy 环节：平台经 TCP 连 127.0.0.1，`qc_agent
      MinIO 后端的建桶/上传/预签名 URL 同样工作；拿不到替身二进制则留空降级验一回）；
    - 模型网关 → 留空降级（验收点：health `vlm_available:false`、前端 agent 轨置灰、报告退模板不报错）；
 4. 4.0 专属验证点（园区网同机会触发，首次实跑）：
-   - 平台绑 18000（高位端口）：非 root 直接可绑，`journalctl` 无 Errno 13、无 setcap（install_server.sh 走免提权快路径）；
+   - 后端绑回环 18010、Nginx 绑 18000（均≥1024）：非 root 直接可绑，`journalctl` 无 Errno 13、无 setcap（分离后后端只听回环，旧低端口提权分枝已废除）；
    - 金相裸装（容器化指南 §10 命令）+ `ai-tool@metallography` systemd（**唯一路线，演练必须跑绿**；容器旁路已作废）；
    - uv.lock 四约束包（tiktoken/pillow/greenlet 等）在 2.28 下 import 正常（约束版本在新一代同样成立）；
 5. 前端 E2E（浏览器用 host-only 网段内的宿主机访问 `http://<VM_IP>:18000/`）：先验**登录**（用 `.env` 的
