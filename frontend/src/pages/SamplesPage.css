@@ -1,6 +1,0 @@
-/* 反馈样本管理页（原型 /tasks/samples 块）：争议样本卡在 grid-23 左栏。
-   原先为长口径文案换行准备的两条 .pager 规则已随该文案一并删除（决策 51-⑪），分页条只报「共 N 条」。 */
-
-.samples-disputed .notice.gray {
-  margin-top: 4px;
-}
