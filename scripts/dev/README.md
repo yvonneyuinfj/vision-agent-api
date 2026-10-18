@@ -90,10 +90,9 @@ bash scripts/dev/make_offline_bundle.sh --on-verifier --with-image
 `deploy/园区网离线部署Runbook.md`，配置模板 `deploy/env.园区网.example`，
 安装器离线分支（`OFFLINE_VENV_TGZ`/`OFFLINE_WHEELS_DIR`）见 `deploy/install_server.sh`。
 
-植入 dist 后可用冒烟脚本验证后端同源托管（无需 MySQL，TestClient 不跑 lifespan）：
-```bash
-.venv/bin/python scripts/dev/smoke_frontend_hosting.py   # / 直出 index.html、/login 深链不 404、静态资源/缺失资源行为
-```
+本地/联调的前后端分离运行（后端只监听回环，Nginx 托管前端并反代 /api/v1）见 `deploy/nginx/README.md`。
+
+> 注意：后端已移除同源静态托管（`_register_frontend` 已删除）。`make_offline_bundle.sh` 仍会把前端 dist 植入 `quality-agent/frontend/dist`，但那份 dist 现在**只作为交付给 Nginx 的产物**，不再由后端直出；园区网离线链路接入 Nginx 的安装步骤与 Runbook 为下一步工作。
 
 ## 真实工具 4 场景 E2E（孔探/热端/X光/金相）
 

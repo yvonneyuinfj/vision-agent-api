@@ -2,11 +2,9 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
 
 from app.api.v1 import routers
 from app.core.auth import AuthService
@@ -18,8 +16,8 @@ from app.services.container import AppContainer
 
 logger = get_logger("app.main")
 
-# 前端构建产物目录（frontend/dist）；不存在时退回根路径探测
-FRONTEND_DIST = Path(__file__).resolve().parents[1] / "frontend" / "dist"
+# 前后端分离：本服务只提供 /api/v1 与 /docs；静态前端由 Nginx 托管并反代到此（见 deploy/nginx/）。
+# 后端应只监听回环地址（生产经 Nginx 对外，见 .env 的 API_HOST/API_PORT）。
 
 
 @asynccontextmanager
@@ -70,36 +68,13 @@ def create_app() -> FastAPI:
     for router in routers:
         app.include_router(router)
 
-    # 前端静态托管（注册在全部 API/docs 路由之后，catch-all 仅在无更早匹配时生效）
-    if (FRONTEND_DIST / "index.html").is_file():
-        _register_frontend(app)
-    else:
-        logger.warning("前端构建产物不存在，跳过静态托管: %s", FRONTEND_DIST)
-
-        # 根路径探测（仅未构建前端时保留）
-        @app.get("/")
-        async def root() -> dict[str, str]:
-            return {"service": settings.tool_name, "version": settings.tool_version}
+    # 前后端分离：后端只负责 /api/v1 与 /docs，静态前端与反向代理由 Nginx 承担。
+    # 根路径保留一个服务探测（非 SPA 托管）。
+    @app.get("/")
+    async def root() -> dict[str, str]:
+        return {"service": settings.tool_name, "version": settings.tool_version}
 
     return app
-
-
-def _register_frontend(app: FastAPI) -> None:
-    """托管 frontend/dist：真实存在的静态文件直出；其余无扩展名路径回落 index.html（SPA 路由）。"""
-    index_file = FRONTEND_DIST / "index.html"
-    dist_root = FRONTEND_DIST.resolve()
-
-    @app.get("/{full_path:path}", include_in_schema=False)
-    async def frontend(full_path: str) -> FileResponse:
-        if full_path:
-            target = (dist_root / full_path).resolve()
-            # 防路径穿越：只允许命中 dist 目录内的真实文件
-            if target.is_file() and target.is_relative_to(dist_root):
-                return FileResponse(target)
-            # 带扩展名的资源未命中 → 404 外壳，避免把 index.html 当 JS/CSS 返回
-            if "." in Path(full_path).name:
-                raise HTTPException(status_code=404, detail="static asset not found")
-        return FileResponse(index_file)
 
 
 def _env_list(name: str, default: list[str]) -> list[str]:

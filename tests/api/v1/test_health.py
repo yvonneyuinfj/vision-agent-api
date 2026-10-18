@@ -10,8 +10,7 @@ import app.main as main
 
 
 @pytest.fixture
-def client(tmp_path, monkeypatch):
-    monkeypatch.setattr(main, "FRONTEND_DIST", tmp_path)
+def client():
     return TestClient(main.create_app())
 
 
