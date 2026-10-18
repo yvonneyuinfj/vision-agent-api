@@ -1,0 +1,146 @@
+# RAG 知识引用治理（rag_retrieval 节点加载；与 grade_rules.yaml 相互独立）
+#
+# knowledge_score_threshold: 知识准入阈值（检索相似度分值）
+#   - 仅 score「大于」该阈值的引用才注入模型上下文（knowledge_prompt），
+#     并参与后续报告引用与「RAG 知识溯源」展示；
+#   - 阈值过低会把低相关文献塞给模型（报告引用噪声），过高则知识支撑缺失；
+#   - 文件缺失/解析失败时回退内置默认 0.35（见 rag_retrieval.DEFAULT_RAG_RULES）。
+#   - 校准（2026-09，航发智能质检知识库 / text-embedding-v4 + hybrid 检索，实测）：
+#       相关查询（叶片裂纹/鼓包/凹坑判级）命中分段 ≈ 0.29–0.36
+#       无关查询（前端组件等）顶分 ≈ 0.21–0.26
+#     旧值 0.35 贴着相关分段下沿，大量任务知识全被滤除（召回恒空）；
+#     0.27 落在两段之间，既放行真实命中又挡住无关顶分。换库/换嵌入模型后须重新校准。
+#
+# scene_datasets: 场景级数据集路由（可选；需求 §5.3 元数据过滤的轻量落地）
+#   - 键 = 检测场景编码（borescope / infrared / dr / fpi / fracture / metallography）
+#   - 值 = 该场景优先检索的 RAGFlow 数据集名称列表；未配置的场景回退 ragflow_dataset_names 全集
+#   - 示例：
+#       scene_datasets:
+#         borescope: ["孔探判级标准", "孔探历史报告"]
+#         fracture: ["断口分析期刊", "失效分析案例库"]
+#
+# scene_doc_excludes: 场景级文档排除（当前知识库为多场景混库，dataset 级路由不生效时的
+#   文档级一致性过滤；RagSearchTool 按文档名子串匹配【大小写不敏感】算出场景允许清单，
+#   经 retrieval 的 document_ids 前置过滤——top_k 名额不被跨场景文档挤占）
+#   - 键 "all" = 对一切场景生效的排除（医学影像/他行业/纯通用算法等与航发质检无关文献）；
+#     场景键 = 仅对该场景生效（其他检测方法的专属文献）
+#   - 通用失效分析/裂纹/材料文献不排（如 K465 叶片开裂分析虽属断口类，但内容含荧光检查，
+#     对 fpi 判级有真实参考价值）——只排「方法明显错位」的文档
+#   - 新文档入库自动被模式覆盖，无需改代码；文档清单有 10 分钟进程内缓存
+
+knowledge_score_threshold: 0.27
+
+scene_doc_excludes:
+  # 与航发质检完全无关：医学影像 / 他行业 / 纯通用视觉算法综述
+  all:
+    - "医学影像"
+    - "骨龄"
+    - "骨质"
+    - "骨密度"
+    - "椎体"
+    - "尺桡骨"
+    - "尘肺"
+    - "Biomedical"
+    - "轮胎"
+    - "散热器"
+    - "能见度"
+    - "图像拼接"
+    - "图像匹配"
+    - "分辨率提升"
+    - "违禁品"
+  # 荧光渗透：排除红外热像 / 孔探内窥 / 射线 DR 方法文献（荧光磁粉属近邻荧光方法，保留）
+  fpi:
+    - "红外"
+    - "热像"
+    - "热波"
+    - "热无损"
+    - "thermography"
+    - "孔探"
+    - "borescope"
+    - "boroscope"
+    - "内窥"
+    - "endoscope"
+    - "X射线"
+    - "X光"
+    - "XRAY"
+    - "DR图像"
+  # 红外热像：排除荧光渗透 / 磁粉 / 孔探 / 射线方法文献
+  infrared:
+    - "荧光"
+    - "渗透"
+    - "penetrant"
+    - "fluorescent"
+    - "磁粉"
+    - "magnetic particle"
+    - "孔探"
+    - "borescope"
+    - "boroscope"
+    - "内窥"
+    - "endoscope"
+    - "X射线"
+    - "X光"
+    - "XRAY"
+    - "DR图像"
+  # 孔探内窥：排除红外 / 荧光磁粉 / 射线方法文献
+  borescope:
+    - "红外"
+    - "热像"
+    - "热波"
+    - "热无损"
+    - "thermography"
+    - "荧光"
+    - "渗透"
+    - "penetrant"
+    - "fluorescent"
+    - "磁粉"
+    - "magnetic particle"
+    - "X射线"
+    - "X光"
+    - "XRAY"
+    - "DR图像"
+  # 射线 DR：排除红外 / 孔探 / 荧光方法文献
+  dr:
+    - "红外"
+    - "热像"
+    - "热波"
+    - "热无损"
+    - "thermography"
+    - "孔探"
+    - "borescope"
+    - "boroscope"
+    - "内窥"
+    - "endoscope"
+    - "荧光"
+    - "渗透"
+    - "penetrant"
+    - "fluorescent"
+  # 断口分析：排除成像方法类文献（失效分析/断裂/裂纹文献全保留）
+  fracture:
+    - "红外"
+    - "热像"
+    - "热波"
+    - "热无损"
+    - "thermography"
+    - "孔探"
+    - "borescope"
+    - "boroscope"
+    - "内窥"
+    - "endoscope"
+    - "X射线"
+    - "X光"
+    - "XRAY"
+  # 金相：同断口口径（材料组织/疲劳/性能文献全保留）
+  metallography:
+    - "红外"
+    - "热像"
+    - "热波"
+    - "热无损"
+    - "thermography"
+    - "孔探"
+    - "borescope"
+    - "boroscope"
+    - "内窥"
+    - "endoscope"
+    - "X射线"
+    - "X光"
+    - "XRAY"

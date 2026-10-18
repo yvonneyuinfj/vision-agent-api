@@ -1,0 +1,37 @@
+/* 首页样式（《建设方案 v0.5》锁定稿）：只补 base.css / shell.css 里没有的页面级件，
+   颜色与圆角一律走全局 token，作用域挂在 .home 下，避免污染其他页正在用的共享类。 */
+
+/* ---------- 1 · hero 双入口 ---------- */
+.home-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 26px 28px;
+  margin-bottom: 16px;
+}
+.home-hero-in { position: relative; z-index: 1; max-width: 760px; }
+.home-hero-title { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-top: 12px; color: var(--fg); }
+.home-hero-desc { margin-top: 8px; font-size: 13.5px; line-height: 1.75; max-width: 640px; }
+/* 装饰线稿（纯视觉，不承载数据）：窄屏让位给文案 */
+.home-hero-art {
+  position: absolute;
+  right: 26px;
+  top: 16px;
+  width: 240px;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* ---------- 3 · 专业工作台六卡 ---------- */
+/* 卡片标记与样式随 SceneStatusCards 抽到 components/common/SceneStatusCards.css（决策 51-⑩，运行监控复用） */
+
+/* ---------- 4 · 队列 / 态势 ---------- */
+.home-queue { padding: 0 4px 4px; }
+.home-runtime-row { font-size: 12.5px; }
+
+/* ---------- 响应式：双栏退化为单列（六卡的断点跟组件走） ---------- */
+@media (max-width: 1100px) {
+  .home-hero-art { display: none; }
+}
+@media (max-width: 900px) {
+  .home .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

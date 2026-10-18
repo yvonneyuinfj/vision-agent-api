@@ -1,0 +1,13 @@
+# constraints-glibc217.txt —— 服务器（NFS Server 3.1，glibc 2.17 / manylinux2014 底线）
+# 二进制依赖上界：只压已知在 glibc 2.17 上无兼容 wheel 的包，供 install_ai_tool.sh
+# 在线安装时经 uv pip -c 注入。离线（--offline）模式由交付方 wheels 目录自担兼容。
+#
+# 判定方法：wheel 文件名含 manylinux2014 / manylinux_2_17 → 可用；
+# 仅含 manylinux_2_27 / manylinux_2_28 / musllinux → 在 glibc 2.17 上不可安装/不可用。
+# （平台侧同类约束见 pyproject.toml [tool.uv] constraint-dependencies，两处独立维护：
+#   平台 venv 归 pyproject 管，工具 venv 归本文件管。）
+
+# pillow 12+ 仅发 manylinux_2_27/2_28 wheel；10.4.0 有 cp311 manylinux2014（平台已验证）
+pillow<12
+# contourpy 1.3+ 仅 manylinux_2_27/2_28；1.2.x 有 manylinux2014（matplotlib 依赖）
+contourpy<1.3

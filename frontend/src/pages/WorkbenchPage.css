@@ -1,0 +1,166 @@
+/* 专业工作台（/detect/:scene）页面私有样式。
+   对齐 docs/design/frontend-v05-ia-prototype.html 的 P['/detect/:scene']：
+   base.css / shell.css 未提供的件（.scenebar 家族、pre.json、步骤号、卡内尾注、摘要行）在此补齐。
+   全部挂在 .workbench-page 下，避免与 HomePage 的同名 .scene-ico 相互覆盖。 */
+
+.workbench-page .wb-head-card {
+  margin-bottom: 16px;
+}
+
+/* ---------- 场景头卡 ---------- */
+.workbench-page .scenebar {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 16px 18px;
+}
+.workbench-page .scene-ico {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.workbench-page .scene-meta {
+  min-width: min(320px, 100%);
+}
+.workbench-page .scene-meta > b {
+  font-size: 16px;
+  font-weight: 650;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.workbench-page .scene-meta p {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 3px;
+  line-height: 1.6;
+}
+/* 首行＝工具简介（注册表 description，面向运营，不含端口/契约/归一术语） */
+.workbench-page .scene-meta .scene-intro {
+  font-size: 13px;
+  color: var(--fg);
+  margin-top: 4px;
+}
+/* 版本留痕行：技术事实降为小号，台账 note 只出现在 /tool/registry 的「说明」列 */
+.workbench-page .scene-meta .tech-meta {
+  font-size: 11.5px;
+}
+.workbench-page .scene-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 7px;
+}
+.workbench-page .scene-chips a.chip {
+  color: var(--muted);
+}
+.workbench-page .scene-chips a.chip:hover {
+  color: var(--accent);
+}
+.workbench-page .scene-meta .flowline {
+  margin-top: 9px;
+}
+/* ---------- 卡头步骤号（与 SubmitPage 私有件同形，页面各持一份以免跨页耦合） ---------- */
+.workbench-page .step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  border: 1px solid color-mix(in oklab, var(--accent) 30%, transparent);
+}
+
+/* 卡内尾随说明：base.css 的 .hint 是行内件，落在块级卡体里需要自己成块 */
+.workbench-page .card-note {
+  display: block;
+  margin-top: 8px;
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--faint);
+}
+.workbench-page .card-note a {
+  color: var(--accent);
+}
+.workbench-page .card-note b {
+  color: var(--muted);
+}
+
+/* ---------- parameters 预览（原型 pre.json 的对应件，base.css 未提供） ---------- */
+.workbench-page .trace-b-json {
+  padding: 0 15px 14px;
+}
+.workbench-page pre.json {
+  margin: 0;
+  padding: 13px 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--muted);
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ---------- 提交卡 ---------- */
+.workbench-page .submit-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.workbench-page .sum-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--border);
+}
+.workbench-page .sum-row b {
+  text-align: right;
+  font-weight: 600;
+  word-break: break-all;
+}
+.workbench-page .sum-row b.mono {
+  font-size: 12px;
+  font-weight: 500;
+}
+/* 保密确认行（送检公共件在本页的落地样式，随页面自带一份） */
+.workbench-page .checked-row {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 14px 0 16px;
+  line-height: 1.5;
+}
+.workbench-page .checked-row input {
+  margin-top: 2px;
+  accent-color: var(--accent);
+}
+
+/* ---------- 契约未冻结的禁用字段：禁用态要看得见、读得出 ---------- */
+.workbench-page .input:disabled {
+  background: var(--surface-2);
+  border-style: dashed;
+  color: var(--faint);
+  cursor: not-allowed;
+}
+

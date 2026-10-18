@@ -1,0 +1,5 @@
+# mock_service 运行依赖（全部有 cp311 manylinux2014 wheel，glibc 2.17 可直接装）
+fastapi==0.115.6
+uvicorn==0.30.6
+python-multipart==0.0.9
+pillow==10.4.0

@@ -1,0 +1,75 @@
+# 智能质检 Agent 系统 —— 后端工程（uv 管理）
+# 运行环境: Python 3.11（对齐《公网云服务器验证环境准备》统一基线）；包管理与虚拟环境强制使用 uv
+[project]
+name = "quality-inspection-agent"
+version = "0.1.0"
+description = "高端装备工业图像智能质检 Agent 系统（FastAPI + LangGraph + RAGFlow）"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    # ===== Web 框架 =====
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "python-multipart>=0.0.9",      # multipart/form-data 上传（对齐规范 §4）
+    # ===== 配置与模型 =====
+    "pydantic>=2.9",
+    "pydantic-settings>=2.5",
+    # ===== Agent 编排 =====
+    "langgraph>=1.0",               # StateGraph 工作流编排 + interrupt 人机复核
+    "langgraph-checkpoint-sqlite>=2.0",  # SQLite 检查点（HITL 断点持久化）
+    # ===== 算法网关 HTTP 调用 =====
+    "httpx>=0.27",
+    # ===== 持久层 =====
+    "sqlalchemy[asyncio]>=2.0",
+    "aiosqlite>=0.20",              # 开发默认 SQLite
+    "psycopg[binary]>=3.2",         # 内网部署 PostgreSQL 驱动（对齐 .env DATABASE_URL）
+    # ===== 日志（复用项目提供的 logger_config.py）=====
+    "python-json-logger>=3.1",      # logger_config 顶层硬依赖（导入名 pythonjsonlogger）
+    "orjson>=3.10",                 # logger_config 可选加速
+    # ===== 规则配置 =====
+    "pyyaml>=6.0",
+    "minio>=7.2.20",
+    "aiomysql>=0.3.2",
+    "cryptography>=43.0",           # aiomysql 连 MySQL caching_sha2_password 认证必需
+    "langchain-openai>=1.5.1",
+    # ===== Prompt 渲染 =====
+    "jinja2>=3.1",                  # langchain PromptTemplate(template_format="jinja2") 运行时依赖
+    "langgraph-checkpoint-postgres>=3.1.2",
+    "langchain-anthropic>=1.6.0",
+    "pillow>=10.0",
+    # ===== 文档生成（能力中心 PPT 制作，A+B：渲染 .pptx + 解析 docx/pdf 参考资料）=====
+    "python-pptx>=1.0",       # .pptx 产物渲染（依赖 lxml/XlsxWriter）
+    "python-docx>=1.1",       # .docx 参考资料抽文本
+    "pdfminer.six>=20240712", # .pdf 参考资料抽文本
+]
+
+[dependency-groups]
+dev = [
+    "langgraph-cli[inmem]",
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# 安装 app 包（logger_config.py 已并入 app/core 包内，随包安装）
+[tool.hatch.build.targets.wheel]
+only-include = ["app"]
+
+[tool.uv]
+package = true
+# 兼容性下限（2026-09-14，NFS Server 3.1 / CentOS7 代 glibc 2.17 实跑教训）：
+# 以下包的新版本仅发布 manylinux_2_24+ wheel，在 glibc 2.17 上会回退 sdist
+# 源码编译并因 gcc 4.8.5 失败；约束到仍带 manylinux2014/2_17 wheel 的版本。
+# 迁移到 NFC Server 4.0（glibc 更新）后可放宽并重新 uv lock。
+constraint-dependencies = [
+    "tiktoken<=0.11.0",
+    "pillow<=12.2.0",
+    "greenlet<=3.2.5",
+    "argon2-cffi-bindings<=21.2.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

@@ -1,0 +1,13 @@
+# 荧光真实工具（blade_defect_detector）服务器安装 · 第二批依赖
+#
+# 为什么单列一份：pycocotools 在推理导入链上（yolox/data/datasets/coco.py 顶层
+# `from pycocotools.coco import COCO`），但它的元数据声明 matplotlib>=2.1.0，
+# 而本离线 wheel 包按 deploy/ai-tools/README.md §6 裁掉了 matplotlib 整栈
+# （matplotlib 只在 labels/yolox_project/industrial_yolox/metrics.py 的离线评估里用）。
+# 结果：`uv pip install --no-index -r 主清单` 含 pycocotools 时无解。
+# pycocotools 运行时实际只需要 numpy（已在主清单），故以 --no-deps 安装。
+#
+# 安装（紧接主清单之后、启动服务之前；缺这一步时 /health 报 degraded、推理返回 2001）：
+#   /opt/uv-tool/bin/uv pip install --python /opt/agent/vision-agent/tools/fluorescence/.venv/bin/python \
+#     --no-index --find-links <wheels 目录> --no-deps -r <本文件>
+pycocotools==2.0.7

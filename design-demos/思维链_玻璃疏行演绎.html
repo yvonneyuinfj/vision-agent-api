@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>思维链 · 玻璃疏行演绎 · AeroQC</title>
+<style>
+/* ============ AeroQC tokens（抽取自 frontend/src/styles/base.css，暗色主题） ============ */
+:root{
+  --bg:            oklch(16.5% 0.02 255);
+  --surface:       rgba(150,182,225,.06);
+  --surface-2:     rgba(150,182,225,.10);
+  --surface-3:     rgba(150,182,225,.17);
+  --fg:            oklch(95% 0.006 250);
+  --muted:         oklch(70% 0.015 250);
+  --faint:         oklch(56% 0.015 250);
+  --border:        rgba(148,182,230,.12);
+  --border-strong: rgba(148,200,255,.26);
+  --accent:        oklch(78% 0.12 195);
+  --accent-dim:    color-mix(in oklab, var(--accent) 14%, transparent);
+  --info:          oklch(72% 0.14 250);
+  --info-dim:      color-mix(in oklab, var(--info) 15%, transparent);
+  --warn:          oklch(80% 0.15 75);
+  --warn-dim:      color-mix(in oklab, var(--warn) 16%, transparent);
+  --danger:        oklch(68% 0.19 25);
+  --danger-dim:    color-mix(in oklab, var(--danger) 16%, transparent);
+  --success:       oklch(76% 0.15 155);
+  --success-dim:   color-mix(in oklab, var(--success) 15%, transparent);
+  --shadow:        0 10px 34px rgba(2,6,16,.45);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro SC", "PingFang SC", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --r-lg:14px; --r-md:10px; --r-sm:8px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{
+  font-family:var(--font-sans); font-size:14px; line-height:1.55; color:var(--fg);
+  background:
+    radial-gradient(46% 30% at 12% -6%, color-mix(in oklab, var(--accent) 11%, transparent), transparent 62%),
+    radial-gradient(34% 36% at 94% 2%, color-mix(in oklab, var(--info) 8%, transparent), transparent 55%),
+    linear-gradient(rgba(255,255,255,.016) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.016) 1px, transparent 1px),
+    var(--bg);
+  background-size:auto,auto,44px 44px,44px 44px,auto; background-attachment:fixed;
+  min-height:100vh; padding:26px 30px 60px;
+}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.grow{flex:1}
+
+/* ============ demo chrome ============ */
+.demo-head{max-width:1460px;margin:0 auto 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.demo-title{font-size:19px;font-weight:650;letter-spacing:-.01em}
+.demo-sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+.demo-btn{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:var(--r-sm);font-size:12.5px;font-weight:550;border:1px solid var(--border);background:var(--surface-2);color:var(--fg);cursor:pointer;transition:.15s}
+.demo-btn:hover{background:var(--surface-3);border-color:var(--border-strong)}
+.demo-btn.primary{background:color-mix(in oklab,var(--accent) 22%,transparent);border-color:color-mix(in oklab,var(--accent) 45%,transparent);color:var(--accent)}
+.demo-btn.primary:hover{background:color-mix(in oklab,var(--accent) 30%,transparent)}
+.demo-btn:disabled{opacity:.4;cursor:default}
+.kbd-hint{font-size:11px;color:var(--faint)}
+kbd{font-family:var(--font-mono);font-size:10px;padding:1.5px 6px;border-radius:5px;background:var(--surface-3);border:1px solid var(--border);color:var(--muted)}
+
+.stage{max-width:1460px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+
+/* ============ 聊天面板 ============ */
+.chat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow);
+  backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%);
+  position:relative;overflow:hidden;display:flex;flex-direction:column;height:calc(100vh - 160px);min-height:560px}
+.chat::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;pointer-events:none;z-index:2;border-radius:var(--r-lg) var(--r-lg) 0 0;
+  background:linear-gradient(90deg,transparent 6%,color-mix(in oklab,var(--accent) 34%,transparent) 50%,transparent 94%);opacity:.5}
+.chat-head{display:flex;align-items:center;gap:10px;padding:13px 18px;border-bottom:1px solid var(--border);flex:none}
+.chat-head b{font-size:13px;font-weight:620}
+.chat-head .en{font-family:var(--font-mono);font-size:9.5px;color:var(--faint);letter-spacing:.1em}
+.flow{flex:1;min-height:0;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+
+/* ============ 消息元素 ============ */
+.msg-user{display:flex;justify-content:flex-end}
+.bubble-user{max-width:72%;padding:9px 13px;border-radius:12px 12px 3px 12px;font-size:13px;
+  background:color-mix(in oklab,var(--accent) 20%,transparent);border:1px solid color-mix(in oklab,var(--accent) 42%,transparent)}
+.bubble-user .imgs{display:flex;gap:6px;margin-top:7px}
+.bubble-user .imgchip{width:52px;height:40px;border-radius:6px;border:1px solid var(--border-strong);
+  background:repeating-linear-gradient(45deg,var(--surface-2),var(--surface-2) 6px,var(--surface-3) 6px,var(--surface-3) 12px);
+  display:grid;place-items:center;font-size:9px;color:var(--faint);font-family:var(--font-mono)}
+.msg-assistant{display:flex;justify-content:flex-start}
+.bubble-asst{max-width:82%;padding:9px 13px;border-radius:12px 12px 12px 3px;font-size:13px;color:var(--fg);
+  background:var(--surface-2);border:1px solid var(--border);white-space:pre-wrap;word-break:break-word}
+.routing-line{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);padding:1px 2px}
+.routing-line .rl-dot{width:5px;height:5px;border-radius:50%;background:var(--info);opacity:.8;flex:none}
+.event-pill{font-size:11.5px;color:var(--faint);padding:3px 12px;border-radius:99px;align-self:flex-start;
+  border:1px solid var(--border);background:var(--surface)}
+/* 流式打字光标 */
+.caret{display:inline-block;width:7px;height:13px;margin-left:2px;border-radius:1px;background:var(--accent);
+  opacity:.85;vertical-align:-2px;animation:caretBlink 1s steps(2) infinite}
+@keyframes caretBlink{0%{opacity:.85}50%{opacity:0}100%{opacity:.85}}
+
+/* ============ 玻璃思考行（无组：每帧一行，与 message 同权） ============ */
+.gl-row{position:relative;display:flex;align-items:center;gap:9px;min-height:38px;padding:8px 13px;
+  flex:none; /* flex 列容器内禁压缩：展开增高的行不被压回 min-height */
+  border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);
+  backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%);
+  overflow:hidden;transition:border-color .15s, background .15s}
+.gl-row.expandable{cursor:pointer}
+.gl-row.expandable:hover{background:var(--surface-2);border-color:var(--border-strong)}
+.gl-row[data-state=running]{border-color:color-mix(in oklab,var(--accent) 34%,transparent)}
+.gl-row[data-state=error]{border-color:color-mix(in oklab,var(--danger) 38%,transparent)}
+.gl-lead{width:14px;flex:none;display:grid;place-items:center}
+.gl-dot{width:6px;height:6px;border-radius:50%;background:var(--faint);opacity:.7}
+.gl-row[data-state=running] .gl-dot{background:var(--accent);opacity:1;animation:glPulse 1.5s ease-in-out infinite}
+.gl-row[data-state=ok] .gl-dot{background:var(--success)}
+.gl-row[data-state=error] .gl-dot{background:var(--danger)}
+.gl-row[data-state=stopped] .gl-dot{background:#d69e2e}
+.gl-tick{display:none;font-size:10px;line-height:1}
+.gl-row[data-state=ok] .gl-tick{display:block;color:var(--success)}
+.gl-row[data-state=error] .gl-tick{display:block;color:var(--danger)}
+.gl-row[data-state=ok] .gl-dot,.gl-row[data-state=error] .gl-dot{display:none}
+.gl-title{font-size:12.5px;font-weight:600;color:var(--muted);flex:none}
+.gl-row[data-variant=think] .gl-title{color:var(--faint)}
+.gl-sep{width:3px;height:3px;border-radius:50%;background:var(--faint);opacity:.7;flex:none}
+.gl-sum{font-size:12px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.gl-row[data-variant=think] .gl-sum{font-style:italic}
+.gl-row[data-state=running] .gl-sum{color:var(--muted)}
+.gl-chev{margin-left:auto;font-size:9px;color:var(--faint);opacity:0;transition:.12s;transform:rotate(0deg);flex:none}
+.gl-row.expandable:hover .gl-chev{opacity:1}
+.gl-row.open .gl-chev{opacity:1;transform:rotate(90deg)}
+.gl-body{display:none;margin-top:7px;padding:8px 11px;border:1px solid var(--border);border-radius:var(--r-sm);
+  background:color-mix(in oklab,var(--surface-2) 70%,transparent);font-size:12px;line-height:1.6;color:var(--muted);
+  white-space:pre-wrap;word-break:break-word;max-height:220px;overflow-y:auto}
+.gl-row.open .gl-body{display:block}
+.gl-row.open{flex-direction:column;align-items:stretch}
+.gl-row.open .gl-head{display:flex;align-items:center;gap:9px;width:100%}
+.gl-head{display:flex;align-items:center;gap:9px;width:100%;min-width:0}
+.gl-gutter{font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--faint);margin:6px 0 2px}
+.gl-gutter:first-child{margin-top:0}
+.gl-body pre{font-family:var(--font-mono);white-space:pre-wrap;word-break:break-all;font-size:11px}
+/* 运行态扫光 */
+.gl-row[data-state=running]::after{content:'';position:absolute;top:0;bottom:0;left:-240px;width:220px;
+  background:linear-gradient(90deg,transparent,color-mix(in oklab,var(--accent) 13%,transparent),transparent);
+  animation:glSweep 2.4s ease-in-out infinite;pointer-events:none}
+@keyframes glSweep{0%{left:-240px}100%{left:100%}}
+@keyframes glPulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes slideIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.arrive{animation:slideIn .28s cubic-bezier(.16,1,.3,1) backwards}
+.no-anim .arrive{animation:none}
+
+/* ============ 卡片公共 ============ */
+.tag{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:550;border:1px solid transparent;white-space:nowrap}
+.t-running{background:var(--info-dim);color:var(--info);border-color:color-mix(in oklab,var(--info) 30%,transparent)}
+.t-review{background:var(--warn-dim);color:var(--warn);border-color:color-mix(in oklab,var(--warn) 35%,transparent)}
+.t-success{background:var(--success-dim);color:var(--success);border-color:color-mix(in oklab,var(--success) 30%,transparent)}
+.t-neutral{background:var(--surface-3);color:var(--muted);border-color:var(--border)}
+
+/* 任务创建卡（只读快照，生命周期这一刻推一张，永不原地改写） */
+.task-card{border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface-2);padding:12px 14px;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.tc-top{display:flex;align-items:center;gap:9px}
+.tc-kind{font-size:10.5px;letter-spacing:.08em;color:var(--faint);font-weight:600}
+.tc-id{font-family:var(--font-mono);font-size:12px;color:var(--accent)}
+.tc-meta{display:flex;gap:14px;margin-top:7px;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+.tc-note{margin-top:8px;font-size:12px;color:var(--muted)}
+
+/* 完成卡：结论 + 报告状态 */
+.done-card{border:1px solid color-mix(in oklab,var(--success) 30%,transparent);border-radius:var(--r-md);
+  background:color-mix(in oklab,var(--success) 5%,var(--surface));padding:12px 14px}
+.dc-grade{margin-top:8px;font-size:12.5px;color:var(--warn)}
+.dc-report{display:flex;align-items:center;gap:9px;margin-top:10px;padding:8px 11px;border:1px solid var(--border);
+  border-radius:var(--r-sm);background:color-mix(in oklab,var(--surface-2) 70%,transparent);font-size:12px;color:var(--muted)}
+.dc-report .rp-ic{font-size:13px}
+.dc-report b{color:var(--fg);font-weight:600}
+.dc-spin{width:11px;height:11px;flex:none;border-radius:50%;border:2px solid var(--surface-3);border-top-color:var(--info);
+  animation:dcSpin 1s linear infinite}
+@keyframes dcSpin{to{transform:rotate(360deg)}}
+
+/* ============ 复核卡（对齐 ReviewPanel：四动作单选 + 条件表单 + 必填意见 + 双按钮） ============ */
+.review-card{border:1px solid color-mix(in oklab,var(--warn) 38%,transparent);border-radius:var(--r-md);
+  background:color-mix(in oklab,var(--warn) 7%,var(--surface));padding:12px 14px}
+.rc-top{display:flex;align-items:center;gap:9px}
+.rc-badge{font-size:10.5px;letter-spacing:.08em;color:var(--warn);font-weight:700}
+.rc-title{font-size:13px;font-weight:600}
+.rc-meta{margin-top:6px;font-size:11.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.rc-defects{margin-top:8px;border-top:1px solid var(--border);padding-top:2px}
+.rc-drow{display:flex;align-items:center;gap:9px;padding:6px 0;font-size:12px}
+.rc-drow + .rc-drow{border-top:1px solid var(--border)}
+.rc-did{font-family:var(--font-mono);font-size:10.5px;color:var(--faint);width:24px;flex:none}
+.rc-form{margin-top:12px}
+.rc-form[data-disabled=true]{opacity:.55;pointer-events:none}
+/* —— 以下四组类名与 base.css 同名对齐（action-card / radio-dot / field / label / select / textarea / rev-foot） —— */
+.action-card{display:flex;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r-md);
+  background:var(--surface);cursor:pointer;transition:.15s;align-items:flex-start}
+.action-card + .action-card{margin-top:8px}
+.action-card:hover{background:var(--surface-2)}
+.action-card.selected{border-color:color-mix(in oklab,var(--accent) 50%,transparent);
+  background:var(--accent-dim);box-shadow:0 0 0 1px color-mix(in oklab,var(--accent) 25%,transparent)}
+.radio-dot{width:15px;height:15px;border-radius:50%;border:1.5px solid var(--border-strong);flex:none;margin-top:2px;
+  display:grid;place-items:center}
+.action-card.selected .radio-dot{border-color:var(--accent)}
+.action-card.selected .radio-dot::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.action-t{flex:1;min-width:0}
+.action-t b{font-size:12.5px;display:block}
+.action-t p{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.45}
+.field{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.label{font-size:12px;font-weight:550;color:var(--muted)}
+.label .req{color:var(--danger);margin-left:3px}
+.label .opt{color:var(--faint);font-weight:400;font-size:11px;margin-left:5px}
+.select,.textarea{font:inherit;font-size:12.5px;color:var(--fg);background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:7px 10px;outline:none;width:100%}
+.select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 55%,calc(100% - 11px) 55%;background-size:5px 5px;background-repeat:no-repeat;cursor:pointer}
+.textarea{resize:vertical;min-height:64px;line-height:1.55}
+.select:hover,.textarea:hover{border-color:var(--border-strong)}
+.select:focus,.textarea:focus{border-color:color-mix(in oklab,var(--accent) 55%,transparent)}
+.hint{font-size:11px;color:var(--faint);line-height:1.55}
+.hint.err{color:var(--danger)}
+.rev-foot{display:flex;gap:10px;margin-top:14px}
+.rev-foot .btn{flex:1;padding:8px 0;border-radius:var(--r-sm);font-size:12.5px;font-weight:600;cursor:pointer;
+  border:1px solid var(--border);background:var(--surface-2);color:var(--fg);transition:.15s}
+.rev-foot .btn:hover{background:var(--surface-3)}
+.rev-foot .btn-primary{background:color-mix(in oklab,var(--accent) 22%,transparent);
+  border-color:color-mix(in oklab,var(--accent) 45%,transparent);color:var(--accent)}
+.rev-foot .btn-danger{background:var(--danger-dim);border-color:color-mix(in oklab,var(--danger) 40%,transparent);color:var(--danger)}
+.rc-submitted{display:flex;align-items:center;gap:9px;margin-top:12px;padding:9px 12px;border-radius:var(--r-sm);
+  background:var(--success-dim);border:1px solid color-mix(in oklab,var(--success) 35%,transparent);
+  font-size:12.5px;color:var(--success)}
+.rc-submitted .mono{font-size:11px;color:var(--muted)}
+
+/* ============ 报告就绪卡 ============ */
+.report-card{border:1px solid color-mix(in oklab,var(--success) 32%,transparent);border-radius:var(--r-md);
+  background:color-mix(in oklab,var(--success) 6%,var(--surface));padding:12px 14px}
+.rp-top{display:flex;align-items:center;gap:9px}
+.rp-badge{font-size:10.5px;letter-spacing:.08em;color:var(--success);font-weight:700}
+.rp-title{font-size:13px;font-weight:600}
+.rp-meta{margin-top:6px;font-size:11.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.rp-lead{margin-top:8px;font-size:12px;color:var(--muted);line-height:1.6}
+.rp-pages{display:flex;gap:9px;margin-top:10px}
+.rp-page{width:66px;height:90px;border-radius:5px;border:1px solid var(--border-strong);flex:none;
+  background:linear-gradient(180deg,rgba(238,243,250,.95),rgba(224,231,243,.95));
+  padding:8px 7px;display:flex;flex-direction:column;gap:3.5px;box-shadow:0 3px 10px rgba(2,6,16,.4)}
+.rp-page i{display:block;height:3px;border-radius:2px;background:rgba(28,38,58,.14)}
+.rp-page i.t{height:5px;width:58%;background:rgba(28,38,58,.3);margin-bottom:2px}
+.rp-page i.m{width:80%}
+.rp-page i.s{width:46%}
+.rp-page i.fig{height:18px;border-radius:3px;background:rgba(66,110,158,.24);margin:3px 0}
+.rp-actions{display:flex;gap:8px;margin-top:11px}
+.rp-btn{font-size:11.5px;padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--muted);cursor:pointer}
+.rp-btn.hot{background:var(--success-dim);border-color:color-mix(in oklab,var(--success) 40%,transparent);color:var(--success)}
+
+/* ============ SSE 帧列表（可点击跳帧） ============ */
+.sse{position:sticky;top:24px;display:flex;flex-direction:column;gap:10px}
+.sse-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow);
+  backdrop-filter:blur(20px) saturate(150%);overflow:hidden}
+.sse-h{display:flex;align-items:center;gap:8px;padding:12px 15px;border-bottom:1px solid var(--border)}
+.sse-h b{font-size:12.5px;font-weight:620}
+.sse-h .en{font-family:var(--font-mono);font-size:9.5px;color:var(--faint);letter-spacing:.1em}
+.sse-body{padding:10px 12px;display:flex;flex-direction:column;gap:6px;height:calc(100vh - 330px);min-height:420px;overflow-y:auto}
+.frame{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:7px;border:1px solid var(--border);
+  background:var(--surface);font-size:11px;cursor:pointer;transition:.13s;user-select:none}
+.frame:hover{background:var(--surface-2);border-color:var(--border-strong)}
+.frame.active{border-color:color-mix(in oklab,var(--accent) 55%,transparent);background:var(--accent-dim)}
+.frame.future{opacity:.42}
+.frame .fidx{font-family:var(--font-mono);font-size:9.5px;color:var(--faint);width:16px;flex:none;text-align:right}
+.frame.active .fidx{color:var(--accent)}
+.frame .ftype{font-family:var(--font-mono);font-size:10px;font-weight:700;padding:1.5px 7px;border-radius:5px;flex:none}
+.ftype.chain{background:var(--accent-dim);color:var(--accent)}
+.ftype.thinking{background:var(--accent-dim);color:var(--accent)}
+.ftype.card{background:var(--warn-dim);color:var(--warn)}
+.ftype.message{background:var(--surface-3);color:var(--muted)}
+.frame .fdesc{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.frame .fid{margin-left:auto;font-family:var(--font-mono);font-size:9.5px;color:var(--faint);flex:none}
+.frame.updated .fid{color:var(--accent)}
+.sse-note{font-size:11px;color:var(--faint);line-height:1.65;padding:0 2px}
+.sse-note b{color:var(--muted)}
+.sse-note .mono{font-size:10px}
+</style>
+</head>
+<body>
+
+<div class="demo-head">
+  <div>
+    <div class="demo-title">思维链 · 玻璃疏行演绎</div>
+    <div class="demo-sub">delta 逐字流：message / thinking 按 start→delta→end 推送 · 卡片只推不改（创建 / 复核 / 完成 / 报告各一张） · 右侧帧可点击跳帧</div>
+  </div>
+  <div class="grow"></div>
+  <span class="kbd-hint"><kbd>←</kbd><kbd>→</kbd> 逐帧 · 点右侧帧跳转</span>
+  <button class="demo-btn" id="btn-cont" disabled>▶ 继续播放</button>
+  <button class="demo-btn primary" id="btn-replay">↻ 重放</button>
+</div>
+
+<div class="stage">
+  <div class="chat">
+    <div class="chat-head"><b>质检助手</b><span class="en">SESSION · 联合质检剧本</span><span class="grow"></span><span class="mono" id="pos-ind" style="font-size:10.5px;color:var(--faint)"></span></div>
+    <div class="flow" id="flow"></div>
+  </div>
+
+  <aside class="sse">
+    <div class="sse-card">
+      <div class="sse-h"><b>SSE 报文流</b><span class="en">EVENT STREAM</span></div>
+      <div class="sse-body" id="sse-log"></div>
+    </div>
+    <div class="sse-note">
+      顶层 <b>type</b> 决定渲染器：<b>message</b>（气泡 · start/delta/end 逐字）、<b>thinking</b>（思考行 · 逐字）、<b>chain</b>（工具调用行）、<b>card</b>（task / review / done / report）。
+      卡片只推不改：创建、复核、完成、报告就绪各落一张新卡；唯一原地更新是 <span class="mono">chain tool_result ↻</span> 回写同一条工具行。
+    </div>
+  </aside>
+</div>
+
+<script>
+'use strict';
+/* ============================================================
+   剧本：联合质检（delta 流式版）。
+   - stream:true 的 message / thinking 会被 expand() 切成
+     start → delta×N → end 帧，前端逐字渲染；
+   - 卡片不原地更新：任务创建、终裁复核、完成（含报告状态）、
+     报告就绪分别推独立卡片。
+   ============================================================ */
+const T = 'T7F2A1';
+const THINK1 = '两个场景需要拆解。按联合质检协议，先为孔探、焊缝各派发一个子任务，然后等待全部落定再汇总结论。';
+const THINK2 = '两个子任务均已落定：孔探子任务检出 B 级疑似缺陷进入人工复核；焊缝子任务通过，检出 2 处腐蚀点。综合两场景结果，整体判 B 级，提交并生成报告。';
+const REPLY1 = `已派发联合质检任务 ${T}（孔探 × 焊缝），两个子任务落定后我会主动回报。`;
+const REPLY2 = '联合质检完成：综合判级 B（孔探子任务待人工终裁，焊缝子任务检出 2 处腐蚀点）。报告已生成，可在上方报告卡查看；复核意见请直接在终裁复核卡中提交。';
+
+const SCRIPT = [
+  {d:350,  f:{type:'message', message:{role:'user', kind:'image', content:'这两张图（管道内壁 + 焊缝）帮我做一次联合质检', images:2}}},
+  {d:650,  f:{type:'message', message:{role:'event', kind:'routing', content:'场景识别：孔探 + 焊缝（联合质检 · 置信度 0.88）'}}},
+  {d:850,  f:{type:'card', card_type:'task_card', message_id:'m-card-create', task_id:T,
+              task:{status:'running', scene:'borescope+weld', mode:'joint'}, payload:{note:'已派发联合质检任务，等待子任务落定'}}},
+  {d:750,  f:{type:'message', stream:true, message_id:'m-a1', message:{role:'assistant', kind:'text', content:REPLY1}}},
+  {d:850,  f:{type:'thinking', stream:true, message_id:'c1', task_id:T, turn:1, text:THINK1}},
+  {d:900,  f:{type:'chain', event:'tool_call', message_id:'c2', task_id:T, turn:1, call_id:'call_1', name:'launch_child_task', args:{scene:'borescope'}}},
+  {d:1150, f:{type:'chain', event:'tool_result', message_id:'c2', task_id:T, turn:1, call_id:'call_1', name:'launch_child_task', args:{scene:'borescope'}, content:'子任务 T7F2A1-01 已派发（borescope）', is_error:false}},
+  {d:650,  f:{type:'chain', event:'tool_call', message_id:'c3', task_id:T, turn:1, call_id:'call_2', name:'launch_child_task', args:{scene:'weld'}}},
+  {d:950,  f:{type:'chain', event:'tool_result', message_id:'c3', task_id:T, turn:1, call_id:'call_2', name:'launch_child_task', args:{scene:'weld'}, content:'子任务 T7F2A1-02 已派发（weld）', is_error:false}},
+  {d:750,  f:{type:'chain', event:'tool_call', message_id:'c4', task_id:T, turn:1, call_id:'call_3', name:'await_children', args:{}}},
+  {d:1400, f:{type:'card', card_type:'review_card', message_id:'m-card-review', task_id:'T7F2A1-01',
+              task:{status:'awaiting_review'},
+              payload:{grade_level:'B', grade_summary:'B 级疑似：内壁腐蚀坑深度接近判级阈值',
+                defects:[
+                  {name:'内壁腐蚀坑', severity:'high',   confidence:0.86},
+                  {name:'壁厚减薄',   severity:'medium', confidence:0.72},
+                  {name:'异物附着',   severity:'low',    confidence:0.61}]}}},
+  {d:550,  f:{type:'message', message:{role:'event', kind:'event', content:'任务 T7F2A1-01 状态更新：awaiting_review（孔探子任务进入人工终裁）'}}},
+  {d:1800, f:{type:'chain', event:'tool_result', message_id:'c4', task_id:T, turn:1, call_id:'call_3', name:'await_children', args:{}, content:'唤醒：2 个子任务落定（borescope:awaiting_review/B；weld:completed/B）', is_error:false}},
+  {d:900,  f:{type:'thinking', stream:true, message_id:'c5', task_id:T, turn:2, text:THINK2}},
+  {d:950,  f:{type:'chain', event:'tool_call', message_id:'c6', task_id:T, turn:2, call_id:'call_4', name:'submit_final', args:{level:'B', review_required:true}}},
+  {d:1050, f:{type:'chain', event:'tool_result', message_id:'c6', task_id:T, turn:2, call_id:'call_4', name:'submit_final', args:{level:'B', review_required:true}, content:'结论已提交：B 级 · 需人工终裁', is_error:false}},
+  {d:800,  f:{type:'card', card_type:'done_card', message_id:'m-card-done', task_id:T,
+              task:{status:'completed', scene:'borescope+weld', mode:'joint', grade_level:'B', defect_count:5},
+              payload:{note:'联合质检完成'}, report:{status:'generating'}}},
+  {d:1700, f:{type:'card', card_type:'report_card', message_id:'m-card-report', task_id:T,
+              report:{status:'ready', pages:3, uri:'/reports/T7F2A1'},
+              payload:{lead:'综合判级 B：孔探内壁腐蚀坑深度接近阈值，建议终裁确认；焊缝 2 处腐蚀点处于可接受范围，建议下一周期复检。'}}},
+  {d:850,  f:{type:'message', stream:true, message_id:'m-a2', message:{role:'assistant', kind:'text', content:REPLY2}}},
+];
+const TOOL_LABELS = {launch_child_task:'派发子任务', await_children:'等待子任务落定', submit_final:'提交最终结论', invoke_capability:'调用检测能力', retrieve_knowledge:'检索知识库'};
+
+/* ---------------- 复核表单字典（对齐 frontend ReviewPanel） ---------------- */
+const REVIEW_ACTIONS = [
+  {action:'confirm', label:'同意 AI 判级', desc:'确认 A1 / A2 判定无误，流转至报告生成节点。'},
+  {action:'revise',  label:'改判 / 修正',  desc:'修改缺陷类型与严重度；在图像上补框漏检、删除误检。'},
+  {action:'requeue', label:'退回重检',     desc:'图像质量不合格，退回任务提交节点重新采集。'},
+  {action:'reject',  label:'驳回',         desc:'任务数据不符合规范，直接终止本次处理流程。', danger:true},
+];
+const REQUEUE_REASONS = ['图像模糊 / 对焦失败', '辐射值 CSV 与图像不匹配', '采集区域错误'];
+const SEVERITIES = [{v:'low',l:'Low'},{v:'medium',l:'Medium'},{v:'high',l:'High'}];
+const SEV_LABEL = {low:'Low', medium:'Medium', high:'High'};
+
+/* ---------------- 剧本展开：stream 条目 → start / delta×N / end 帧 ---------------- */
+function chunkText(text){
+  // 模拟 LLM token 到达：2~4 字一片
+  const chunks = []; let i = 0;
+  while (i < text.length){ const n = 2 + Math.floor(Math.random() * 3); chunks.push(text.slice(i, i + n)); i += n; }
+  return chunks;
+}
+function expandScript(script){
+  const frames = [];
+  for (const step of script){
+    const f = step.f;
+    if (!f.stream){ frames.push(step); continue; }
+    const text = f.type === 'thinking' ? f.text : f.message.content;
+    const base = {type:f.type, message_id:f.message_id};
+    if (f.type === 'thinking'){ base.task_id = f.task_id; base.turn = f.turn; }
+    else base.message = {role:f.message.role, kind:f.message.kind};
+    frames.push({d:step.d, f:{...base, phase:'start'}});
+    for (const c of chunkText(text)) frames.push({d:34 + Math.floor(Math.random() * 40), f:{...base, phase:'delta', delta:c}});
+    frames.push({d:120, f:{...base, phase:'end'}});
+  }
+  return frames;
+}
+const FRAMES = expandScript(SCRIPT);
+
+const flow = document.getElementById('flow');
+const logEl = document.getElementById('sse-log');
+const posInd = document.getElementById('pos-ind');
+const btnReplay = document.getElementById('btn-replay');
+const btnCont = document.getElementById('btn-cont');
+
+/* ---------------- 元素构建 ---------------- */
+function el(tag, cls, html){ const n = document.createElement(tag); if (cls) n.className = cls; if (html !== undefined) n.innerHTML = html; return n; }
+function firstLine(t){ const i = t.indexOf('\n'); return (i === -1 ? t : t.slice(0, i)).trim(); }
+function argsSummary(args){
+  if (!args || Object.keys(args).length === 0) return '—';
+  if (args.scene) return `场景 ${args.scene}`;
+  if (args.level) return `判级 ${args.level}${args.review_required ? ' · 需人工终裁' : ''}`;
+  return JSON.stringify(args);
+}
+function bodyFor(fr, done){
+  const IN = Object.keys(fr.args || {}).length ? `<div class="gl-gutter">IN</div><pre>${JSON.stringify(fr.args, null, 2)}</pre>` : '';
+  const OUT = done ? `<div class="gl-gutter">OUT</div><pre>${fr.content || ''}</pre>` : `<div class="gl-gutter">STATE</div><pre>running…</pre>`;
+  return IN + OUT;
+}
+function userBubble(m){
+  const imgs = Array.from({length: m.images || 0}, (_,i) => `<span class="imgchip">IMG${i+1}</span>`).join('');
+  return el('div','msg-user arrive', `<div class="bubble-user">${m.content ? `<div>${m.content}</div>` : ''}${imgs ? `<div class="imgs">${imgs}</div>` : ''}</div>`);
+}
+function routingLine(m){ return el('div','routing-line arrive', `<span class="rl-dot"></span>${m.content}`); }
+function eventPill(m){ return el('div','event-pill arrive', `⚙ ${m.content}`); }
+
+/* ----- 流式 message：start 建泡（含光标），delta 追加，end 收光标 ----- */
+function streamBubble(fr){
+  const node = el('div','msg-assistant arrive');
+  node.dataset.mid = fr.message_id;
+  node.innerHTML = `<div class="bubble-asst"><span class="stext"></span><span class="caret"></span></div>`;
+  return node;
+}
+
+/* ----- 卡片一：任务创建（只读快照，不随生命周期翻转） ----- */
+function taskCard(f){
+  const c = el('div','task-card arrive'); c.dataset.mid = f.message_id;
+  c.innerHTML = `
+    <div class="tc-top"><span class="tc-kind">质检任务 · 创建</span><span class="tc-id">${f.task_id}</span>
+      <span class="grow"></span><span class="tag t-running">● 执行中</span></div>
+    <div class="tc-meta"><span>场景：${f.task.scene}</span><span>模式：${f.task.mode === 'joint' ? '联合' : '智能体'}</span></div>
+    ${f.payload?.note ? `<div class="tc-note">${f.payload.note}</div>` : ''}`;
+  return c;
+}
+
+/* ----- 卡片二：终裁复核（表单对齐 ReviewPanel：四动作单选 + 条件字段 + 必填意见 + 双按钮） ----- */
+function reviewCard(f){
+  const c = el('div','review-card arrive'); c.dataset.mid = f.message_id;
+  const p = f.payload;
+  const defects = p.defects || [];
+  const defectOpts = [...new Set(defects.map(d => d.name)), '其他…'];
+  // 严重度初值对齐 ReviewPanel：useState(() => defects?.[0]?.severity ?? 'medium')
+  const initSev = SEVERITIES.some(s => s.v === defects[0]?.severity) ? defects[0].severity : 'medium';
+  const defectRows = defects.map((d, i) => `
+    <div class="rc-drow"><span class="rc-did">A${i+1}</span><b style="font-weight:600">${d.name}</b>
+      <span class="grow"></span><span class="tag t-neutral">${SEV_LABEL[d.severity] ?? d.severity}</span>
+      <span class="mono" style="font-size:10.5px;color:var(--faint)">${d.confidence?.toFixed(2) ?? '—'}</span></div>`).join('');
+  c.innerHTML = `
+    <div class="rc-top"><span class="rc-badge">终裁复核</span><span class="rc-title">任务 ${f.task_id} 等待人工终裁</span>
+      <span class="grow"></span><span class="tag t-review">awaiting_review</span></div>
+    <div class="rc-meta"><span>AI 预判：${p.grade_level} 级</span><span>${p.grade_summary}</span><span>缺陷 ${defects.length} 项</span></div>
+    ${defects.length ? `<div class="rc-defects">${defectRows}</div>` : ''}
+    <div class="rc-form">
+      ${REVIEW_ACTIONS.map(a => `
+        <div class="action-card" data-action="${a.action}" role="radio" aria-checked="false" tabindex="0">
+          <span class="radio-dot"></span>
+          <div class="action-t"><b${a.danger ? ' style="color:var(--danger)"' : ''}>${a.label}</b><p>${a.desc}</p></div>
+        </div>`).join('')}
+      <div class="field" data-when="revise" hidden>
+        <label class="label">缺陷类型（A1）<span class="req">*</span></label>
+        <select class="select" data-field="defect_type">${defectOpts.map(o => `<option>${o}</option>`).join('')}</select>
+      </div>
+      <div class="field" data-when="revise" hidden>
+        <label class="label">严重度<span class="req">*</span></label>
+        <select class="select" data-field="severity">${SEVERITIES.map(s => `<option value="${s.v}"${s.v===initSev?' selected':''}>${s.l}</option>`).join('')}</select>
+        <span class="hint">改判为 High 后，将自动附加工卡建议并通知工艺负责人。</span>
+      </div>
+      <div class="field" data-when="requeue" hidden>
+        <label class="label">退回原因<span class="req">*</span></label>
+        <select class="select" data-field="requeue_reason">
+          <option value="">请选择退回原因…</option>${REQUEUE_REASONS.map(r => `<option>${r}</option>`).join('')}
+        </select>
+      </div>
+      <div data-when="reject" hidden><span class="hint" style="display:block;margin-top:12px">驳回后任务将终止流转；如需重新采集，请选择「退回重检」。</span></div>
+      <div class="field">
+        <label class="label">复核意见<span class="req">*</span><span class="opt">必填 · 记录人工干预理由</span></label>
+        <textarea class="textarea" rows="3" placeholder="复核意见（必填）" data-field="opinion"></textarea>
+        <span class="hint err" data-field="err" hidden>请填写复核意见（必填）</span>
+      </div>
+      <div class="rev-foot">
+        <button class="btn btn-danger" data-submit="requeue">退回重检</button>
+        <button class="btn btn-primary" data-submit="selected">提交复核 · 继续流水线</button>
+      </div>
+    </div>`;
+  wireReviewForm(c);
+  return c;
+}
+function wireReviewForm(card){
+  let action = null;
+  const form = card.querySelector('.rc-form');
+  const opinion = card.querySelector('[data-field=opinion]');
+  const err = card.querySelector('[data-field=err]');
+  function select(a){
+    action = a; err.hidden = true;
+    form.querySelectorAll('.action-card').forEach(n => {
+      const on = n.dataset.action === a;
+      n.classList.toggle('selected', on); n.setAttribute('aria-checked', String(on));
+    });
+    form.querySelectorAll('[data-when]').forEach(n => { n.hidden = n.dataset.when !== a; });
+  }
+  form.querySelectorAll('.action-card').forEach(n => {
+    n.addEventListener('click', () => select(n.dataset.action));
+    n.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); select(n.dataset.action); } });
+  });
+  opinion.addEventListener('input', () => { err.hidden = true; });
+  function submit(finalAction){
+    const reason = card.querySelector('[data-field=requeue_reason]')?.value || '';
+    const trimmed = opinion.value.trim();
+    const merged = finalAction === 'requeue' && reason ? `${reason}；${trimmed}` : trimmed;
+    if (!merged){ err.hidden = false; opinion.focus(); return; }
+    if (finalAction !== 'requeue' && !finalAction) return; // 未选动作
+    const label = REVIEW_ACTIONS.find(a => a.action === finalAction)?.label ?? finalAction;
+    form.dataset.disabled = 'true';
+    form.insertAdjacentHTML('beforeend',
+      `<div class="rc-submitted">✓ 复核已提交 · ${label}<span class="grow"></span><span class="mono">${card.dataset.mid}</span></div>`);
+  }
+  card.querySelector('[data-submit=requeue]').addEventListener('click', () => submit('requeue'));
+  card.querySelector('[data-submit=selected]').addEventListener('click', () => submit(action));
+}
+
+/* ----- 卡片三：完成（结论 + 报告状态） ----- */
+function doneCard(f){
+  const c = el('div','done-card arrive'); c.dataset.mid = f.message_id;
+  const generating = f.report?.status !== 'ready';
+  c.innerHTML = `
+    <div class="tc-top"><span class="tc-kind">质检任务 · 完成</span><span class="tc-id">${f.task_id}</span>
+      <span class="grow"></span><span class="tag t-success">✓ 已完成</span></div>
+    <div class="tc-meta"><span>场景：${f.task.scene}</span><span>模式：${f.task.mode === 'joint' ? '联合' : '智能体'}</span>
+      ${f.task.defect_count ? `<span>检出 ${f.task.defect_count} 项</span>` : ''}</div>
+    ${f.task.grade_level ? `<div class="dc-grade">综合判级：${f.task.grade_level} · ${f.payload?.note || ''}</div>` : ''}
+    <div class="dc-report">
+      ${generating ? '<span class="dc-spin"></span><span>报告状态：<b>生成中…</b> 报告就绪后将推送报告卡</span>'
+                   : '<span class="rp-ic">📄</span><span>报告状态：<b>已生成</b></span>'}
+    </div>`;
+  return c;
+}
+
+/* ----- 卡片四：报告就绪 ----- */
+function reportCard(f){
+  const c = el('div','report-card arrive'); c.dataset.mid = f.message_id;
+  const pages = Array.from({length: f.report?.pages || 3}, (_, i) => `
+    <div class="rp-page"><i class="t"></i><i class="m"></i><i></i>${i === 1 ? '<i class="fig"></i>' : ''}<i class="s"></i><i></i><i class="m"></i></div>`).join('');
+  c.innerHTML = `
+    <div class="rp-top"><span class="rp-badge">报告就绪</span><span class="rp-title">智能质检报告 ${f.task_id}</span>
+      <span class="grow"></span><span class="tag t-success">已生成</span></div>
+    <div class="rp-meta"><span>${f.report?.pages || 3} 页</span><span>Markdown + 标注图</span><span class="mono" style="font-size:10.5px">${f.report?.uri ?? ''}</span></div>
+    ${f.payload?.lead ? `<div class="rp-lead">${f.payload.lead}</div>` : ''}
+    <div class="rp-pages">${pages}</div>
+    <div class="rp-actions"><button class="rp-btn hot">查看报告</button><button class="rp-btn">下载 PDF</button></div>`;
+  return c;
+}
+
+/* ----- 玻璃行：thinking（流式）与 chain（工具事件） ----- */
+function thinkRowStart(fr){
+  const row = el('div','gl-row arrive expandable'); row.dataset.mid = fr.message_id;
+  row.dataset.variant = 'think'; row.dataset.state = 'running';
+  row.innerHTML = `
+    <div class="gl-head">
+      <span class="gl-lead"><span class="gl-dot"></span><span class="gl-tick">✓</span></span>
+      <span class="gl-title">思考</span><span class="gl-sep"></span>
+      <span class="gl-sum"><span class="stext"></span><span class="caret"></span></span><span class="gl-chev">▸</span>
+    </div>
+    <div class="gl-body"></div>`;
+  row.addEventListener('click', () => row.classList.toggle('open'));
+  return row;
+}
+function toolRow(fr){
+  const row = el('div','gl-row arrive expandable'); row.dataset.mid = fr.message_id;
+  row.dataset.variant = 'tool'; row.dataset.state = 'running';
+  row.innerHTML = `
+    <div class="gl-head">
+      <span class="gl-lead"><span class="gl-dot"></span><span class="gl-tick">✓</span></span>
+      <span class="gl-title">${TOOL_LABELS[fr.name] ?? fr.name}</span><span class="gl-sep"></span>
+      <span class="gl-sum"></span><span class="gl-chev">▸</span>
+    </div>
+    <div class="gl-body">${bodyFor(fr, false)}</div>`;
+  row.querySelector('.gl-sum').textContent = argsSummary(fr.args);
+  row.addEventListener('click', () => row.classList.toggle('open'));
+  return row;
+}
+function applyToolResult(fr){
+  const row = flow.querySelector(`.gl-row[data-mid="${fr.message_id}"]`);
+  if (!row) return;
+  row.dataset.state = fr.is_error ? 'error' : 'ok';
+  row.querySelector('.gl-tick').textContent = fr.is_error ? '✕' : '✓';
+  row.querySelector('.gl-sum').textContent = firstLine(fr.content || '');
+  row.querySelector('.gl-body').innerHTML = bodyFor(fr, true);
+}
+
+/* ---------------- 帧应用：顶层 type 分派渲染器 ---------------- */
+function applyFrame(fr){
+  if (fr.type === 'message'){
+    if (fr.phase){ // 流式：start / delta / end
+      if (fr.phase === 'start') flow.appendChild(streamBubble(fr));
+      else {
+        const b = flow.querySelector(`.msg-assistant[data-mid="${fr.message_id}"]`);
+        if (!b) return;
+        if (fr.phase === 'delta') b.querySelector('.stext').textContent += fr.delta;
+        else b.querySelector('.caret')?.remove();
+      }
+    } else { // 非流式：用户 / 路由 / 事件消息整帧落地
+      const m = fr.message;
+      let node;
+      if (m.role === 'user') node = userBubble(m);
+      else if (m.kind === 'routing') node = routingLine(m);
+      else if (m.role === 'event') node = eventPill(m);
+      else node = el('div','msg-assistant arrive', `<div class="bubble-asst">${m.content}</div>`);
+      flow.appendChild(node);
+    }
+  } else if (fr.type === 'thinking'){
+    if (fr.phase === 'start') flow.appendChild(thinkRowStart(fr));
+    else {
+      const row = flow.querySelector(`.gl-row[data-mid="${fr.message_id}"]`);
+      if (!row) return;
+      if (fr.phase === 'delta'){
+        row.querySelector('.stext').textContent += fr.delta;
+        row.querySelector('.gl-body').textContent += fr.delta;
+      } else {
+        row.dataset.state = 'ok';
+        row.querySelector('.caret')?.remove();
+      }
+    }
+  } else if (fr.type === 'card'){
+    // 卡片只推不改：每张卡都是独立新节点
+    const node = fr.card_type === 'review_card' ? reviewCard(fr)
+               : fr.card_type === 'done_card'   ? doneCard(fr)
+               : fr.card_type === 'report_card' ? reportCard(fr)
+               : taskCard(fr);
+    flow.appendChild(node);
+  } else if (fr.type === 'chain'){
+    if (fr.event === 'tool_result') applyToolResult(fr);
+    else if (fr.event === 'tool_call') flow.appendChild(toolRow(fr));
+  }
+  flow.scrollTop = flow.scrollHeight;
+}
+
+/* ---------------- SSE 日志：delta 连帧聚合为一行（点击跳帧） ---------------- */
+function frameDesc(fr){
+  if (fr.type === 'chain') return `${fr.event}${fr.name ? ' · ' + (TOOL_LABELS[fr.name] ?? fr.name) : ''} · t${fr.turn}`;
+  if (fr.type === 'card') return fr.card_type + (fr.task?.status ? ' · ' + fr.task.status : '');
+  if (fr.type === 'thinking') return `thinking · t${fr.turn} · ${fr.phase ?? ''}`;
+  if (fr.phase) return `${fr.message.role}/${fr.message.kind} · ${fr.phase}`;
+  return `${fr.message.role}/${fr.message.kind}`;
+}
+let logEntries = []; // {el, start, end, rep, kind}
+function buildLog(){
+  logEl.innerHTML = ''; logEntries = [];
+  let i = 0, n = 0;
+  while (i < FRAMES.length){
+    const rep = FRAMES[i].f;
+    let end = i + 1;
+    // 聚合：同一 message_id 的连续 delta 帧合并为一条日志
+    if (rep.phase === 'delta'){
+      while (end < FRAMES.length && FRAMES[end].f.phase === 'delta' && FRAMES[end].f.message_id === rep.message_id) end++;
+    }
+    const e = el('div','frame future');
+    const total = end - i;
+    e.innerHTML = `<span class="fidx">${String(n+1).padStart(2,'0')}</span><span class="ftype ${rep.type}">${rep.type}</span><span class="fdesc">${frameDesc(rep)}${rep.phase === 'delta' ? ` ×${total}` : ''}</span><span class="fid">${rep.message_id ?? '—'}</span>`;
+    const jumpIdx = i;
+    e.addEventListener('click', () => jumpTo(jumpIdx));
+    logEl.appendChild(e);
+    logEntries.push({el:e, start:i, end, rep});
+    i = end; n++;
+  }
+}
+function markLog(appliedCount){
+  const seen = new Set();
+  logEntries.forEach(entry => {
+    const {el:e, start, end, rep} = entry;
+    e.classList.toggle('future', start >= appliedCount);
+    e.classList.toggle('active', appliedCount > start && appliedCount <= end);
+    const key = rep.message_id;
+    const isUpdate = rep.type === 'chain' && rep.event === 'tool_result' && key && seen.has(key);
+    if (key) seen.add(key);
+    e.classList.toggle('updated', Boolean(isUpdate) && end <= appliedCount);
+    if (isUpdate) e.querySelector('.fid').textContent = key + ' ↻';
+    // delta 聚合行：播放中显示已到达片数
+    if (rep.phase === 'delta' && appliedCount > start && appliedCount < end)
+      e.querySelector('.fdesc').textContent = `${frameDesc(rep)} ${appliedCount - start}/${end - start}`;
+    else if (rep.phase === 'delta')
+      e.querySelector('.fdesc').textContent = `${frameDesc(rep)} ×${end - start}`;
+  });
+  posInd.textContent = `${appliedCount} / ${FRAMES.length}`;
+  // 已播到的最新帧滚进视野
+  if (appliedCount > 0){
+    const cur = logEntries.find(en => appliedCount > en.start && appliedCount <= en.end) || logEntries[logEntries.length - 1];
+    cur?.el.scrollIntoView({ block: 'nearest' });
+  }
+}
+
+/* ---------------- 播放控制 ---------------- */
+let timers = [];
+let applied = 0;      // 已应用帧数
+let playing = false;
+function clearTimers(){ timers.forEach(clearTimeout); timers = []; }
+function resetAll(){
+  clearTimers(); playing = false; applied = 0;
+  flow.innerHTML = ''; buildLog(); markLog(0); btnCont.disabled = true;
+}
+function applyN(n){ // 立即应用前 n 帧（跳帧用，无动画延迟）
+  flow.classList.add('no-anim');
+  for (let i = 0; i < n; i++) applyFrame(FRAMES[i].f);
+  void flow.offsetHeight; flow.classList.remove('no-anim');
+  applied = n; markLog(n);
+}
+function playFrom(i){
+  clearTimers(); playing = true; btnCont.disabled = true;
+  let t = 0;
+  for (let k = i; k < FRAMES.length; k++){
+    t += FRAMES[k].d;
+    timers.push(setTimeout(() => {
+      applyFrame(FRAMES[k].f);
+      applied = k + 1; markLog(applied);
+      if (applied === FRAMES.length){ playing = false; btnCont.disabled = true; }
+    }, t));
+  }
+}
+function jumpTo(i){ // 跳到第 i 帧（0 起）之后的状态并停住
+  clearTimers(); playing = false;
+  flow.innerHTML = '';
+  applyN(i + 1);
+  btnCont.disabled = applied >= FRAMES.length;
+}
+btnReplay.addEventListener('click', () => { resetAll(); playFrom(0); });
+btnCont.addEventListener('click', () => { if (!playing && applied < FRAMES.length) playFrom(applied); });
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'ArrowRight'){ ev.preventDefault(); clearTimers(); playing = false; if (applied < FRAMES.length){ applyFrame(FRAMES[applied].f); applied++; markLog(applied); btnCont.disabled = applied >= FRAMES.length; } }
+  else if (ev.key === 'ArrowLeft'){ ev.preventDefault(); if (applied > 0) jumpTo(applied - 2); }
+});
+
+resetAll();
+playFrom(0);
+</script>
+</body>
+</html>

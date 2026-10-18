@@ -1,0 +1,43 @@
+/* antd 组件局部覆写：颜色全部取自 base.css token（--surface/--border/--accent 等），
+   明暗主题自动跟随。antd 其余主题化由 ConfigProvider（constants/theme.ts）负责。 */
+:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+/* 上传拖拽区：玻璃化 + 悬浮高亮 */
+.ant-upload-drag {
+  background: var(--surface) !important;
+  border: 1px dashed var(--border-strong) !important;
+  border-radius: var(--r-md) !important;
+  transition: border-color 180ms cubic-bezier(0.4, 0, 0.2, 1), background 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ant-upload-drag:hover,
+.ant-upload-drag.ant-upload-drag-hover {
+  border-color: var(--accent) !important;
+  background: var(--accent-dim) !important;
+}
+.ant-upload-drag .ant-upload-drag-icon > .anticon {
+  color: var(--accent) !important;
+}
+
+/* 表格：表头字距 */
+.ant-table-thead > tr > th {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+}
+
+/* 折叠面板标题不抢焦 */
+.ant-collapse-ghost > .ant-collapse-item > .ant-collapse-header {
+  color: var(--muted);
+}
+
+/* 知识卡片上下文引用（blockquote） */
+.kbi-context-q {
+  border-left: 2px solid var(--border-strong);
+  padding: 2px 8px;
+  margin: 4px 0;
+  color: var(--muted);
+  font-size: 12px;
+}

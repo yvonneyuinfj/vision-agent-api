@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+
+      - name: Sync dependencies
+        run: uv sync --frozen --dev
+
+      - name: Run backend tests
+        run: uv run pytest -q
+
+  eval-assets:
+    # 评估资产完整性：金样本期望文件可加载、覆盖全部样本、断言逻辑自洽
+    # （不跑真实评估——需要活体 LLM/RAGFlow/mock 能力，由本地或验收环境执行）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+
+      - name: Sync dependencies
+        run: uv sync --frozen --dev
+
+      - name: Check eval expectations
+        run: uv run pytest tests/scripts/test_eval_expectations.py -q

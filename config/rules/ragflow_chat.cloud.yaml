@@ -1,0 +1,65 @@
+# ============================================================================
+# RAGFlow 聊天助手配置 —— ⚠️ 公网验证服务器（阿里云 POC）专用变体
+#
+# dataset_ids/llm_id 为公网验证服务器 RAGFlow v0.27.1 实例内 id（2026-09-15 实测），
+# 对本地 RAGFlow（localhost:9380）无效——本地请用 ragflow_chat.yaml（默认）。
+# 云端部署时在 .env 设 RAGFLOW_CHAT_CONFIG_PATH=./config/rules/ragflow_chat.cloud.yaml。
+#
+# （以下为原文件头）
+# RAGFlow 聊天助手配置（YAML 唯一事实源，替代原 config/ragflow_chat.json）
+#
+# - 启动时由 app/knowledge/chat_config.py::ChatConfigStore 载入，
+#   经 ChatAssistantConfig 严格校验（extra=forbid / 禁密钥 / {knowledge} 契约）；
+# - 启动幂等同步到 RAGFlow（POST /api/v1/chats，同名复用 + PATCH）；
+# - 「助手配置」页面 PUT /api/v1/ragflow/chat/config 成功后原子回写本文件。
+#
+# 注意：
+# - llm_id 必须为本 RAGFlow 实例「模型供应商」中已注册的模型（格式 模型名@厂商）；
+# - 空字符串请保留 "" 引号写法（裸空值会被 YAML 解析为 null）；
+# - do_refer 必须为字符串 "1"/"0"（加引号，防止被解析为数字）。
+# ============================================================================
+name: 质量检测
+description: ""
+icon: ""
+dataset_ids:
+  - "e1644592afdf11f1b3c15bda763bd1b6"   # 航发智能质检知识库（公网验证服务器 RAGFlow v0.27.1，2026-09-15 实测 id）
+language: Chinese
+# 2026-09-15 公网验证服务器：llm_id = RAGFlow 实例 tenant_model 表实存 UUID
+# （deepseek-v4-flash-0731，供应商 New API/tokenPlane，亦即租户默认聊天模型）。
+# 换模型：RAGFlow UI「模型供应商」查 UUID，或经平台「助手配置」页 PUT 自动回写本文件。
+llm_id: "ad1b9076afdd11f1b3c15bda763bd1b6"
+llm_setting:
+  frequency_penalty: 0.5
+  model_type:
+    - chat
+  parameter: Precise
+  presence_penalty: 0.5
+  temperature: 0.2
+  thinking: disabled
+  top_p: 0.75
+prompt_config:
+  empty_response: ""
+  keyword: false
+  parameters:
+    - key: knowledge
+      optional: false
+  prologue: 你好！我是你的助理，有什么可以帮到你的吗？
+  quote: true
+  reasoning: false
+  reference_metadata: {}
+  refine_multiturn: false
+  system: |-
+    你是一个智能助手，请总结知识库的内容来回答问题，请列举知识库中的数据详细回答。当所有知识库内容都与问题无关时，你的回答必须包括"知识库中未找到您要的答案！"这句话。回答需要考虑聊天历史。
+    以下是知识库：
+    {knowledge}
+    以上是知识库。
+  toc_enhance: false
+  tts: false
+  use_kg: false
+prompt_type: simple
+rerank_id: ""
+similarity_threshold: 0.6
+vector_similarity_weight: 0.7
+top_n: 3
+top_k: 1024
+do_refer: "1"

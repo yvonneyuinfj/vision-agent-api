@@ -1,0 +1,430 @@
+/* 质检报告详情页专属样式（三分区版式对齐 docs/design/frontend-v05-ia-prototype.html /tasks/:id） */
+
+/* ===== 判级结论块（第 ② 区） ===== */
+.verdict {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.verdict-ico {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--danger-dim);
+  color: var(--danger);
+  border: 1px solid color-mix(in oklab, var(--danger) 30%, transparent);
+}
+.verdict p {
+  font-size: 12.8px;
+  color: var(--muted);
+  line-height: 1.65;
+  margin-top: 6px;
+}
+.verdict b {
+  font-size: 13.5px;
+  font-weight: 620;
+}
+/* 五 · 综合判级 内联 MD 摘要（与设计稿段落同版式） */
+.rp-verdict-md p {
+  margin-bottom: 6px;
+}
+.verdict-line {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--faint);
+  align-items: center;
+}
+.defect-name .dn-cn {
+  color: var(--fg);
+  font-weight: 600;
+  font-size: 13.5px;
+}
+
+/* 缺陷卡置信度条按严重度着色（原型：High·红 / Medium·琥珀 / Low·蓝） */
+.defect-card.sev-h .meter-fill {
+  background: var(--danger);
+}
+.defect-card.sev-m .meter-fill {
+  background: var(--warn);
+}
+.defect-card.sev-l .meter-fill {
+  background: var(--info);
+}
+
+/* ===== 三分区（决策 5：模型输出 / AI 解释 / 人工结论，物理隔离、各自标源） ===== */
+.zone {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+.zone-h {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-3);
+}
+.zone-h b {
+  font-size: 13px;
+  font-weight: 600;
+}
+.zone-h .zn {
+  width: 19px;
+  height: 19px;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  flex: none;
+}
+.zn.z1 {
+  background: var(--surface-2);
+  color: var(--faint);
+  border: 1px solid var(--border-strong);
+}
+.zn.z2 {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+.zn.z3 {
+  background: var(--success-dim);
+  color: var(--success);
+}
+.zone-h .zsrc {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--faint);
+}
+.zone-b {
+  padding: 14px;
+}
+.zone-b .notice + * {
+  margin-top: 13px;
+}
+.zone-note {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--muted);
+}
+.zone-note b {
+  color: var(--fg);
+  font-weight: 600;
+}
+/* 第 ① 区尾注：版本与溯源（原「性能与追溯信息」上收至此） */
+.zone-foot {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 13px;
+  padding-top: 11px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--faint);
+}
+.zone-foot b {
+  color: var(--muted);
+  font-weight: 550;
+}
+.zone-foot .btn {
+  margin-left: auto;
+}
+/* 缺陷卡两列（左列宽区，卡片比右栏单列更紧凑） */
+.defect-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+  margin-top: 13px;
+}
+/* 第 ③ 区只读人工结论 */
+.review-done .rd-row {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 12.5px;
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.review-done .rd-row b {
+  width: 96px;
+  flex: none;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+  font-weight: 550;
+}
+.review-done .rd-opinion {
+  margin-top: 11px;
+  padding: 11px 13px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 12.8px;
+  line-height: 1.75;
+  color: var(--fg);
+  white-space: pre-wrap;
+}
+.review-done .rd-diff {
+  margin-top: 9px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.review-done .hint {
+  display: block;
+  margin-top: 9px;
+}
+/* 右栏任务事件行（原型 .row + 虚线分隔）：节点名可截断，长消息换行，绝不撑破 396px 右栏 */
+.ev-row {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 12.5px;
+}
+.ev-row:last-child {
+  border-bottom: none;
+}
+.ev-ts {
+  width: 38px;
+  flex: none;
+}
+.ev-row .grow {
+  min-width: 0;
+  flex: 1 1 auto;
+  line-height: 1.55;
+  word-break: break-word;
+}
+/* 节点消息可能是整段工具载荷：两行为止，完整内容挂 title，避免右栏被撑成一屏 JSON */
+.ev-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* 图例色块：只读说明，不要 chip 的 hover 可点反馈 */
+.legend-sw {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--faint);
+}
+.legend-sw i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  border: 2px solid currentColor;
+  display: inline-block;
+}
+.legend-sw.dashed i {
+  border-style: dashed;
+}
+.ev-node {
+  font-size: 10.5px;
+  color: var(--faint);
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 事件链可长达数十条（含节点原始消息）：卡内滚动，避免右栏把左列三分区拉成空白 */
+.ev-body {
+  padding-top: 6px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+/* 样本清单行可点击切图 */
+button.file-row {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  color: var(--fg);
+}
+button.file-row:hover {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+button.file-row .fmeta {
+  margin-left: auto;
+}
+
+/* ===== RAG 知识溯源 ===== */
+.rag-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 13px;
+}
+@media (max-width: 1100px) {
+  .rag-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== 查看器容器 ===== */
+/* 左列自上而下是「图层对照 + 三分区」，viewer 保持自身高度，不再拉伸到整列 */
+.grid-23 { align-items: start; }
+.viewer-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 14px 10px;
+}
+.viewer-tabs .tab {
+  padding: 4px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg);
+  font-size: 13px;
+  cursor: pointer;
+}
+.viewer-tabs .tab.active {
+  background: var(--accent-dim);
+  border-color: color-mix(in oklab, var(--accent) 55%, transparent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.viewer-box {
+  position: relative;
+  height: 56vh;
+  min-height: 380px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+/* 标注面板样式随 AnnotationPanel 组件内联（Viewer 玻璃浮层列内） */
+
+/* ---------- ReAct 思考链（mode=agent） ---------- */
+.tc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  max-height: 520px;
+  overflow-y: auto;
+}
+.tc-entry {
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 9px 12px;
+  background: var(--surface);
+}
+.tc-label {
+  font-size: 11px;
+  font-weight: 620;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  margin-bottom: 5px;
+}
+.tc-label .mono { font-weight: 400; color: var(--faint); }
+.tc-briefing { border-style: dashed; }
+.tc-briefing .tc-text { color: var(--muted); font-size: 12px; }
+.tc-thought {
+  border-left: 3px solid color-mix(in oklab, var(--accent) 55%, transparent);
+}
+.tc-thought .tc-label { color: var(--accent); }
+.tc-text {
+  font-size: 12.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.tc-tool {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.tc-args {
+  font-size: 11px;
+  color: var(--muted);
+  word-break: break-all;
+}
+.tc-pre {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--muted);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+/* ---------- 联合父子链可视化（优化轮 E2） ---------- */
+.parent-link {
+  display: block;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-sm);
+  text-decoration: none;
+}
+.parent-link:hover { border-color: var(--accent); color: var(--fg); }
+.children-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.child-card {
+  display: block;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  color: var(--fg);
+}
+.child-card:hover { border-color: var(--accent); background: var(--surface-3); }
+.cc-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cc-id { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.cc-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12.5px; }
+
+/* 思考链实时跟随指示（优化轮 E3） */
+.tc-live { color: var(--success); animation: tclive 1.4s ease-in-out infinite; }
+@keyframes tclive { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+
+/* ---------- 失败横幅（优化轮 E4） ---------- */
+.err-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border-radius: var(--r-sm);
+  border: 1px solid color-mix(in oklab, var(--danger) 40%, transparent);
+  background: var(--danger-dim);
+}
+.err-banner.err-reject {
+  border-color: color-mix(in oklab, var(--warn) 45%, transparent);
+  background: var(--warn-dim);
+}
+.err-main { flex: 1; font-size: 13px; color: var(--fg); }
+.err-hint { margin-top: 4px; font-size: 12.5px; color: var(--muted); }
+.err-banner .btn { flex: none; }

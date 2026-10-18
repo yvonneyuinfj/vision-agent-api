@@ -1,0 +1,187 @@
+/* 任务提交页专属样式（页面私有：步骤卡头 / 场景卡 / 模式 chips / 请求体预览；
+   送检输入公共件见 components/intake/intake.css，chip / details.trace / flowline 等走 base.css、shell.css） */
+.step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  border: 1px solid color-mix(in oklab, var(--accent) 30%, transparent);
+}
+.field .label .req { color: var(--danger); margin-right: 6px; }
+.field .label .opt {
+  color: var(--faint); font-size: 11px; font-weight: 400; margin-left: 8px;
+  border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px;
+}
+/* 卡内尾随说明：base.css 的 .hint 是行内件，落在块级卡体里需要自己成块 */
+.card-note {
+  display: block;
+  margin-top: 8px;
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--faint);
+}
+
+/* ---------- 摘要行（提交前确认） ---------- */
+.sum-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--border);
+}
+.sum-row:last-child {
+  border-bottom: none;
+}
+.sum-row b:not(.mono) {
+  max-width: 210px;
+  text-align: right;
+}
+.checked-row {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 14px 0 16px;
+  line-height: 1.5;
+}
+.checked-row input {
+  margin-top: 2px;
+  accent-color: var(--accent);
+}
+
+/* ---------- 执行模式三档（单场景 / 多场景并行 / 联合研判，均落在真实 mode 上） ---------- */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip-row .chip {
+  font-size: 12.5px;
+  padding: 6px 14px;
+}
+
+/* ---------- 场景多选卡片 ---------- */
+.scene-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.scene-card {
+  position: relative;
+  padding: 12px 13px 12px 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  cursor: pointer;
+  transition: 0.15s;
+}
+.scene-card:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+.scene-card.selected {
+  border-color: color-mix(in oklab, var(--accent) 50%, transparent);
+  background: var(--accent-dim);
+}
+.scene-card .chk {
+  position: absolute;
+  left: 12px;
+  top: 15px;
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  border: 1.5px solid var(--border-strong);
+  transition: 0.15s;
+}
+.scene-card.selected .chk {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.scene-card.selected .chk::after {
+  content: "";
+  position: absolute;
+  left: 4.5px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--bg);
+  border-width: 0 2px 2px 0;
+  transform: rotate(42deg);
+}
+.sc-t {
+  font-size: 13px;
+  font-weight: 620;
+}
+.sc-t span {
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  margin-left: 6px;
+  font-weight: 400;
+}
+.sc-req {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+  line-height: 1.45;
+}
+.scene-card.selected .sc-req {
+  color: var(--accent);
+}
+/* 采集注意事项（原「场景联动输入要求」表折进场景卡） */
+.sc-note {
+  font-size: 10.5px;
+  color: var(--faint);
+  margin-top: 3px;
+  line-height: 1.45;
+}
+
+/* ---------- 工作台带入的锁定场景卡（决策 11：工作台复用提交组件） ---------- */
+.locked-scene {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 13px 15px;
+  border: 1px solid color-mix(in oklab, var(--accent) 45%, transparent);
+  border-radius: var(--r-md);
+  background: var(--accent-dim);
+}
+.locked-scene .sc-t { grid-column: 1; }
+.locked-scene .sc-req { grid-column: 1; }
+
+/* ---------- 确认卡：右栏常驻（长表单滚动时不丢提交入口） ---------- */
+.submit-confirm {
+  position: sticky;
+  top: 16px;
+}
+
+/* ---------- 请求体预览（原型 pre.json 的页面私有对应件，base.css 未提供） ---------- */
+.req-preview {
+  margin-top: 4px;
+}
+.req-preview-b {
+  padding: 0 15px 14px;
+}
+.req-json {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.75;
+  color: var(--muted);
+  white-space: pre-wrap;
+  word-break: break-all;
+}

@@ -1,0 +1,57 @@
+# 金样本期望（评估资产基线：边界集 + 保留集的起点）
+#
+# 语义：每条期望描述该样本在当前能力矩阵下的「应然终态」。提示词/规则/编排
+# 任何改动后跑 `python scripts/eval_samples.py --check` 验证不退化（保留集），
+# 新增样本与期望即边界集（改动应当改善的失败案例）。
+#
+# 现阶段期望基于 2026-08-26 基线（scripts/eval_results.json）：
+# - mock 能力对 class1~class4 报 normal，但图像可见缺陷 → 智能体视觉证据与
+#   能力结果矛盾，正确行为是异议转人工（awaiting_review + agent_request）；
+# - class5_1（断口）能力与视觉一致（无缺陷）→ completed + pass，无异议。
+# 接入真实算法能力后，本文件必须按真实标注重新标定（那时 grade_level 才是
+# 对真实能力的期望，当前是对 Harness 异议行为的期望）。
+defaults:
+  mode: agent
+
+samples:
+  class1_1:
+    expect:
+      status: awaiting_review
+      agent_request: true
+
+  class2_1:
+    expect:
+      status: awaiting_review
+      agent_request: true
+
+  class3_1:
+    expect:
+      status: awaiting_review
+      agent_request: true
+
+  class3_2:
+    expect:
+      status: awaiting_review
+      agent_request: true
+
+  class3_3:
+    expect:
+      status: awaiting_review
+      agent_request: true
+
+  class4_1:
+    expect:
+      status: awaiting_review
+      agent_request: true
+
+  class4_2:
+    expect:
+      status: awaiting_review
+      agent_request: true
+
+  class5_1:
+    expect:
+      status: completed
+      scene: fracture
+      grade_level: pass
+      agent_request: false

@@ -1,0 +1,89 @@
+# === 个人系统文件 ===
+.DS_Store
+Thumbs.db
+
+.workbuddy/
+.qoder/
+.zcode/
+.codex/
+.claude/
+.cursor/
+.dsh
+.opencode/
+.gemini/
+.kilocode/
+.cline/
+.roo/
+
+# === 敏感配置（含账号口令等，禁止提交，对应规范 §14）===
+.env
+.env.*
+!.env.example
+
+# === Python / 依赖环境 ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# === 日志与运行产物 ===
+*.log
+*.pid
+
+# === mock_service 运行产物（按 README 生成的测试图像等）===
+/mock_service/*.jpg
+/mock_service/*.jpeg
+/mock_service/*.png
+/mock_service/*.tif
+/mock_service/*.tiff
+
+# === 运行期数据（输入/报告/DB/检查点）===
+/data/
+/logs/
+*.db
+*.db-shm
+*.db-wal
+
+# === 部署打包产物 ===
+*.tar.gz
+offline-bundle/
+
+# === LangGraph Studio（langgraph dev 本地状态）===
+.langgraph_api/
+
+# === SDD 工作区（计划执行产物：ledger/briefs/review packages）===
+.superpowers/
+
+# === superpowers 过程文档（plans/specs，内部物料不入库）===
+docs/superpowers/
+
+# === IDE / 编辑器 ===
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# === frontend / node_modules ===
+node_modules/
+
+# === playwright ===
+frontend/playwright-mcp/
+.playwright-mcp
+# === playwright e2e 产物与浏览器 ===
+.pw-browsers/
+frontend/e2e/test-results/
+frontend/e2e/html-report/
+frontend/test-results/
+
+# ===前端===
+docs/design

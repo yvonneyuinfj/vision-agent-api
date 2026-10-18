@@ -1,0 +1,121 @@
+/* 登录页 —— 风格贴合 base.css 设计系统（玻璃拟态 + 品牌蓝 + 双主题） */
+.auth-wrap {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: hidden;
+  /* 复用 AppLayout 深色极光氛围；浅色保持纯净底 */
+  background: var(--bg);
+}
+
+[data-theme="dark"] .auth-wrap {
+  background:
+    radial-gradient(46% 30% at 12% -6%, color-mix(in oklab, var(--accent) 11%, transparent), transparent 62%),
+    radial-gradient(34% 36% at 94% 2%, color-mix(in oklab, var(--info) 8%, transparent), transparent 55%),
+    radial-gradient(55% 45% at 50% 112%, color-mix(in oklab, var(--accent) 7%, transparent), transparent 60%),
+    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px),
+    var(--bg);
+  background-size: auto, auto, auto, 44px 44px, 44px 44px, auto;
+  background-attachment: fixed;
+}
+
+.auth-card {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  padding: 36px 36px 28px;
+  z-index: 1;
+}
+
+.auth-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.auth-logo {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+}
+
+.auth-brand h1 {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--fg);
+  margin: 0;
+  letter-spacing: .01em;
+}
+
+.auth-brand p {
+  margin: 2px 0 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--faint);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.auth-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.auth-title-main {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.auth-title-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.auth-form .ant-input-affix-wrapper {
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border-color: var(--border-strong);
+}
+
+.auth-form .ant-input-affix-wrapper:hover,
+.auth-form .ant-input-affix-wrapper:focus-within {
+  border-color: var(--accent);
+}
+
+.auth-submit {
+  height: 40px;
+  border-radius: var(--r-md);
+  font-weight: 500;
+  letter-spacing: .2em;
+}
+
+.auth-theme-toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.auth-theme-toggle:hover {
+  border-color: var(--border-strong);
+  color: var(--fg);
+}

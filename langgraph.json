@@ -1,0 +1,11 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "single": "./app/studio.py:single_graph",
+    "react": "./app/studio.py:react_graph",
+    "joint": "./app/studio.py:joint_graph",
+    "session": "./app/studio.py:session_graph"
+  },
+  "env": "./.env",
+  "python_version": "3.11"
+}

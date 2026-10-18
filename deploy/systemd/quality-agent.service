@@ -1,0 +1,37 @@
+# 智能质检 Agent 平台 —— systemd 单元（非容器化部署）
+# 由 deploy/install_server.sh 替换占位符 __APP_USER__ / __APP_DIR__ / __APP_PORT__ 后
+# 安装到 /etc/systemd/system/quality-agent.service；手工安装时请先自行替换。
+[Unit]
+Description=Quality Inspection Agent Platform (FastAPI + LangGraph)
+Documentation=file:__APP_DIR__/deploy/README.md
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__APP_USER__
+Group=__APP_USER__
+WorkingDirectory=__APP_DIR__
+# .env 为平台唯一配置入口（600 权限）；注意 systemd EnvironmentFile 不支持行内注释
+EnvironmentFile=__APP_DIR__/.env
+Environment=PYTHONUNBUFFERED=1
+# 非 root 绑定低端口（如 ECS 80）所需提权；园区网用 18000 等高位端口（≥1024）时下列能力冗余但无害，
+# 且 install_server.sh 会跳过 setcap 分支（见其第 5/6 步端口分类逻辑）。部署手册 §10.3：验证机 80/443 已腾给质检智能体。
+# systemd >= 229：AmbientCapabilities 生效，nnp 保留（正解）。
+# systemd <  229（如 NFS 3.1 的 219）：AmbientCapabilities 被忽略（Unknown lvalue，
+#   仅日志噪音），且 nnp 会使 setcap 文件能力失效 → install_server.sh 装机时自动
+#   注释下一行并对解释器 setcap（详见 deploy/README「systemd 版本差异」）。
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+# 单 worker：LangGraph 检查点可能落 SQLite（CHECKPOINTER_PATH），多进程不安全；
+# 确需多 worker 时先切 CHECKPOINTER_URL=PostgreSQL 并压测验证。
+ExecStart=__APP_DIR__/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port __APP_PORT__
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=quality-agent
+
+[Install]
+WantedBy=multi-user.target

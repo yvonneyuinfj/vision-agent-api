@@ -1,0 +1,38 @@
+# /opt/agent/vision-agent/tools 算法工具实例 —— systemd 模板单元（非容器化部署）
+#
+# 用法：install_ai_tool.sh 安装到 /etc/systemd/system/ai-tool@.service 后，
+#   systemctl enable --now ai-tool@<tool>    # <tool> ∈ xray/fracture/metallography/
+#                                            #   borescope/hotsection/fluorescence
+# 实例名 %i = 工具账户名 = /opt/agent/vision-agent/tools 下目录名（env-prep 初始化保证三者一致）。
+#
+# systemd 219（NFS Server 3.1）兼容性说明：
+# - 工具端口 18011-18016 均 >1024，无需 AmbientCapabilities/setcap（平台 80 端口
+#   的差异处理见 deploy/systemd/quality-agent.service 注释，两者互不影响）；
+# - NoNewPrivileges/PrivateTmp/ProtectSystem 在 219 均可用，保留作最小加固；
+# - 不设 ProtectHome：交付工具可能写 ~/.cache（如 torch JIT 缓存），保持可写。
+[Unit]
+Description=AI algorithm tool instance (%i) under /opt/agent/vision-agent/tools
+Documentation=file:/opt/agent/vision-agent/tools/README.md
+After=network.target
+
+[Service]
+Type=simple
+User=%i
+Group=%i
+WorkingDirectory=/opt/agent/vision-agent/tools/%i
+# tool.env：HOST/PORT/TOOL_NAME 等（install_ai_tool.sh 生成，640 root:tool 不可写）
+EnvironmentFile=-/opt/agent/vision-agent/tools/%i/tool.env
+Environment=PYTHONUNBUFFERED=1
+# start.sh 解耦层（决策 #5）：各工具包自带，前台 exec 启动，端口/主机来自 tool.env
+ExecStart=/opt/agent/vision-agent/tools/%i/start.sh
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ai-tool-%i
+
+[Install]
+WantedBy=multi-user.target

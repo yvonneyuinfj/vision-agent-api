@@ -1,0 +1,154 @@
+/* 思考链行（共识轮：ReasoningRow/ToolRow 行几何） */
+.cr-root {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.cr-root[data-state='error'] { color: var(--warn); }
+.cr-root[data-state='stopped'] { color: color-mix(in oklab, #b7791f 78%, var(--muted)); }
+
+.cr-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+  overflow: hidden;
+  outline: none;
+}
+.cr-head[role='button'] { cursor: pointer; }
+.cr-head[role='button']:hover .cr-summary { color: var(--muted); }
+.cr-head:focus-visible { box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 55%, transparent); border-radius: 4px; }
+
+/* 前导位：状态点；可展开行悬停/展开时切换为 chevron（hover 预览） */
+.cr-leading {
+  position: relative;
+  width: 14px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 14px;
+}
+.cr-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.65;
+}
+.cr-root[data-state='running'] .cr-dot {
+  color: var(--accent);
+  opacity: 1;
+  animation: crPulse 1.6s ease-in-out infinite;
+}
+/* 终态点：错误红 / 中断琥珀（StateDot 语义） */
+.cr-state-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.cr-state-dot.error { background: var(--danger, #e5534b); }
+.cr-state-dot.stopped { background: #d69e2e; box-shadow: 0 0 0 3px color-mix(in oklab, #d69e2e 22%, transparent); }
+
+.cr-chev {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--faint);
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity 0.12s, transform 0.15s;
+}
+.cr-root:hover .cr-chev { opacity: 1; }
+.cr-root:hover .cr-dot, .cr-root[data-open] .cr-dot { visibility: hidden; }
+.cr-root:hover .cr-state-dot, .cr-root[data-open] .cr-state-dot { visibility: hidden; }
+.cr-root[data-open] .cr-chev { opacity: 1; transform: rotate(90deg); }
+
+.cr-title { font-weight: 600; flex: none; }
+.cr-root[data-variant='think'] .cr-title { color: var(--faint); }
+.cr-sep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--faint);
+  opacity: 0.7;
+  flex: none;
+}
+.cr-summary {
+  color: var(--faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  transition: color 0.12s;
+}
+/* 运行中思考摘要：跟随行尾（data-follow-end），横向可滚 */
+.cr-root[data-variant='think'][data-state='running'] .cr-summary {
+  color: var(--muted);
+}
+
+/* 展开体：内滚，不撑爆消息流 */
+.cr-body {
+  margin: 4px 0 8px 22px;
+  padding: 8px 10px;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: color-mix(in oklab, var(--surface-2) 70%, transparent);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.cr-think-body { white-space: pre-wrap; word-break: break-word; }
+.cr-pre {
+  font-family: var(--mono, ui-monospace, monospace);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.cr-gutter {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  opacity: 0.85;
+  margin: 6px 0 2px;
+}
+.cr-gutter:first-child { margin-top: 0; }
+
+/* 运行态扫光（ToolRow data-state=running 同款） */
+.cr-root[data-state='running'] .cr-head::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -240px;
+  width: 220px;
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--accent) 13%, transparent), transparent);
+  animation: crSweep 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes crSweep {
+  0% { left: -240px; }
+  100% { left: 100%; }
+}
+@keyframes crPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* 读屏专用 */
+.cr-vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -1,0 +1,21 @@
+/* 通用件（非主题定义）：布局高度 + 滚动条重塑。
+   body 背景/字体等主题资产由 base.css 全权负责，此处不再覆盖。 */
+html, body, #root { height: 100%; }
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+::-webkit-scrollbar-thumb:active { background: var(--faint); }
+::-webkit-scrollbar-track { background: transparent; }
+
+@media (forced-colors: active) {
+  * { scrollbar-color: auto; }
+}
